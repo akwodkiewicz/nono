@@ -1,4 +1,5 @@
 import ClueEditor from './components/ClueEditor';
+import PhotoImport from './components/PhotoImport';
 import SolverView from './components/SolverView';
 import { useAppStore } from './state/store';
 
@@ -14,7 +15,9 @@ export default function App() {
         </div>
       </header>
       <main className="mx-auto max-w-5xl p-4">
-        {view === 'editor' ? <ClueEditor /> : <SolverView />}
+        {view === 'editor' && <ClueEditor />}
+        {view === 'import' && <PhotoImport />}
+        {view === 'solver' && <SolverView />}
       </main>
     </div>
   );

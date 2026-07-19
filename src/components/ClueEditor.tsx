@@ -75,6 +75,7 @@ export default function ClueEditor() {
   const loadExample = useAppStore((s) => s.loadExample);
   const clearClues = useAppStore((s) => s.clearClues);
   const startSolver = useAppStore((s) => s.startSolver);
+  const setView = useAppStore((s) => s.setView);
 
   const rowParseError = (i: number) => parseClueText(rowTexts[i]) === null;
   const colParseError = (i: number) => parseClueText(colTexts[i]) === null;
@@ -92,6 +93,12 @@ export default function ClueEditor() {
         <CountInput label="Wiersze:" value={rowTexts.length} onChange={setRowCount} />
         <CountInput label="Kolumny:" value={colTexts.length} onChange={setColCount} />
         <div className="ml-auto flex gap-2">
+          <button
+            onClick={() => setView('import')}
+            className="rounded border border-blue-300 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100"
+          >
+            Wczytaj ze zdjęć
+          </button>
           <button
             onClick={loadExample}
             className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100"

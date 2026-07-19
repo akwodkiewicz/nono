@@ -5,7 +5,7 @@ import type { Grid, LineRef, Puzzle, SolveStep } from '../solver/types';
 import { validatePuzzle } from '../solver/validate';
 import { formatClue, parseClueText } from './clueText';
 
-export type View = 'editor' | 'solver';
+export type View = 'editor' | 'import' | 'solver';
 export type UiStatus = 'ready' | SolverStatus;
 
 export const MAX_SIZE = 60;
@@ -39,6 +39,9 @@ interface AppState {
   setView: (view: View) => void;
   setRowText: (index: number, text: string) => void;
   setColText: (index: number, text: string) => void;
+  /** Podmienia całe listy wskazówek (wynik OCR); zmienia też wymiary. */
+  setRowTexts: (texts: string[]) => void;
+  setColTexts: (texts: string[]) => void;
   setRowCount: (count: number) => void;
   setColCount: (count: number) => void;
   loadExample: () => void;
@@ -104,6 +107,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((s) => ({ rowTexts: s.rowTexts.map((t, i) => (i === index ? text : t)) })),
   setColText: (index, text) =>
     set((s) => ({ colTexts: s.colTexts.map((t, i) => (i === index ? text : t)) })),
+  setRowTexts: (texts) => set({ rowTexts: texts.length > 0 ? texts : [''] }),
+  setColTexts: (texts) => set({ colTexts: texts.length > 0 ? texts : [''] }),
   setRowCount: (count) => set((s) => ({ rowTexts: resize(s.rowTexts, count) })),
   setColCount: (count) => set((s) => ({ colTexts: resize(s.colTexts, count) })),
   loadExample: () =>
