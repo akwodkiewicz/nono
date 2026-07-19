@@ -1,0 +1,139 @@
+import { create } from 'zustand';
+import { cluesFromGrid, gridFromStrings } from '../solver/clues';
+import { Solver, type SolverStatus, type StepResult } from '../solver/solver';
+import type { Grid, LineRef, Puzzle, SolveStep } from '../solver/types';
+import { validatePuzzle } from '../solver/validate';
+import { formatClue, parseClueText } from './clueText';
+
+export type View = 'editor' | 'solver';
+export type UiStatus = 'ready' | SolverStatus;
+
+export const MAX_SIZE = 60;
+
+const EXAMPLE = cluesFromGrid(
+  gridFromStrings([
+    '....##....',
+    '...####...',
+    '..######..',
+    '.########.',
+    '##########',
+    '####..####',
+    '###....###',
+    '###....###',
+    '####..####',
+    '##########',
+  ]),
+);
+
+interface AppState {
+  view: View;
+  rowTexts: string[];
+  colTexts: string[];
+  /** Zagadka aktualnie w solverze (ustawiana przy starcie rozwiązywania). */
+  puzzle?: Puzzle;
+  grid: Grid;
+  steps: SolveStep[];
+  status: UiStatus;
+  contradiction?: LineRef;
+
+  setView: (view: View) => void;
+  setRowText: (index: number, text: string) => void;
+  setColText: (index: number, text: string) => void;
+  setRowCount: (count: number) => void;
+  setColCount: (count: number) => void;
+  loadExample: () => void;
+  clearClues: () => void;
+  startSolver: () => void;
+  stepOnce: () => void;
+  runAll: () => void;
+  undoStep: () => void;
+}
+
+/** Parsuje teksty wskazówek; null, gdy którakolwiek linia jest niepoprawna. */
+export function parsePuzzle(rowTexts: string[], colTexts: string[]): Puzzle | null {
+  const rowClues: number[][] = [];
+  for (const text of rowTexts) {
+    const clue = parseClueText(text);
+    if (clue === null) return null;
+    rowClues.push(clue);
+  }
+  const colClues: number[][] = [];
+  for (const text of colTexts) {
+    const clue = parseClueText(text);
+    if (clue === null) return null;
+    colClues.push(clue);
+  }
+  return { rowClues, colClues };
+}
+
+// Instancja solvera żyje poza store'em: zawiera kolejkę i mutowalną planszę,
+// a do store'u trafiają jej niemutowalne migawki (React dostaje nowe referencje).
+let solver: Solver | null = null;
+
+function snapshot(result?: StepResult) {
+  if (!solver) {
+    return { grid: [] as Grid, steps: [] as SolveStep[], status: 'ready' as UiStatus, contradiction: undefined };
+  }
+  return {
+    grid: solver.grid.map((row) => [...row]),
+    steps: [...solver.steps],
+    status: (result?.status ?? 'ready') as UiStatus,
+    contradiction: result?.contradiction,
+  };
+}
+
+function resize(texts: string[], count: number): string[] {
+  const n = Math.max(1, Math.min(MAX_SIZE, Math.floor(count) || 1));
+  return texts.length >= n
+    ? texts.slice(0, n)
+    : [...texts, ...Array<string>(n - texts.length).fill('')];
+}
+
+export const useAppStore = create<AppState>((set, get) => ({
+  view: 'editor',
+  rowTexts: EXAMPLE.rowClues.map(formatClue),
+  colTexts: EXAMPLE.colClues.map(formatClue),
+  puzzle: undefined,
+  grid: [],
+  steps: [],
+  status: 'ready',
+  contradiction: undefined,
+
+  setView: (view) => set({ view }),
+  setRowText: (index, text) =>
+    set((s) => ({ rowTexts: s.rowTexts.map((t, i) => (i === index ? text : t)) })),
+  setColText: (index, text) =>
+    set((s) => ({ colTexts: s.colTexts.map((t, i) => (i === index ? text : t)) })),
+  setRowCount: (count) => set((s) => ({ rowTexts: resize(s.rowTexts, count) })),
+  setColCount: (count) => set((s) => ({ colTexts: resize(s.colTexts, count) })),
+  loadExample: () =>
+    set({
+      rowTexts: EXAMPLE.rowClues.map(formatClue),
+      colTexts: EXAMPLE.colClues.map(formatClue),
+    }),
+  clearClues: () =>
+    set((s) => ({
+      rowTexts: s.rowTexts.map(() => ''),
+      colTexts: s.colTexts.map(() => ''),
+    })),
+
+  startSolver: () => {
+    const { rowTexts, colTexts } = get();
+    const puzzle = parsePuzzle(rowTexts, colTexts);
+    if (!puzzle || validatePuzzle(puzzle).length > 0) return;
+    solver = new Solver(puzzle);
+    set({ view: 'solver', puzzle, ...snapshot() });
+  },
+  stepOnce: () => {
+    if (!solver) return;
+    set(snapshot(solver.step()));
+  },
+  runAll: () => {
+    if (!solver) return;
+    set(snapshot(solver.run()));
+  },
+  undoStep: () => {
+    if (!solver || !solver.undo()) return;
+    set({ ...snapshot(), status: solver.steps.length > 0 ? 'progress' : 'ready' });
+  },
+}));

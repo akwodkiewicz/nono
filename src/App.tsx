@@ -1,10 +1,21 @@
+import ClueEditor from './components/ClueEditor';
+import SolverView from './components/SolverView';
+import { useAppStore } from './state/store';
+
 export default function App() {
+  const view = useAppStore((s) => s.view);
+
   return (
-    <main className="mx-auto max-w-3xl p-8">
-      <h1 className="text-2xl font-bold">nono — solver nonogramów</h1>
-      <p className="mt-2 text-gray-600">
-        Rdzeń solvera gotowy (src/solver). Interfejs planszy powstaje w etapie 2.
-      </p>
-    </main>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <header className="border-b border-gray-200 bg-white px-4 py-3">
+        <div className="mx-auto flex max-w-5xl items-baseline gap-3">
+          <h1 className="text-xl font-bold">nono</h1>
+          <span className="text-sm text-gray-500">solver nonogramów</span>
+        </div>
+      </header>
+      <main className="mx-auto max-w-5xl p-4">
+        {view === 'editor' ? <ClueEditor /> : <SolverView />}
+      </main>
+    </div>
   );
 }
