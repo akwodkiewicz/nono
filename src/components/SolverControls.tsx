@@ -1,9 +1,9 @@
-import { describeStep, lineLabel } from '../state/stepText';
+import { lineLabel } from '../state/stepText';
 import { useAppStore, type CheckResult } from '../state/store';
 import { UNKNOWN } from '../solver/types';
 
-const BUTTON =
-  'rounded border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40';
+const ICON_BUTTON =
+  'flex h-9 w-11 items-center justify-center rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40';
 
 function checkMessage(result: CheckResult | null): { text: string; cls: string } {
   if (!result) {
@@ -31,6 +31,67 @@ function checkMessage(result: CheckResult | null): { text: string; cls: string }
   }
 }
 
+// Ikony transportu jako inline SVG — glify Unicode (⏮ ▶ ⏭ …) na części
+// urządzeń mobilnych renderują się jako kolorowe emoji.
+function IconStepBack() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+      <rect x="2.5" y="3" width="2" height="10" />
+      <path d="M13.5 3 L6 8 L13.5 13 Z" />
+    </svg>
+  );
+}
+
+function IconPlay() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+      <path d="M4 2.5 L13.5 8 L4 13.5 Z" />
+    </svg>
+  );
+}
+
+function IconPause() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+      <rect x="3.5" y="3" width="3" height="10" />
+      <rect x="9.5" y="3" width="3" height="10" />
+    </svg>
+  );
+}
+
+function IconStepForward() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+      <path d="M2.5 3 L10 8 L2.5 13 Z" />
+      <rect x="11.5" y="3" width="2" height="10" />
+    </svg>
+  );
+}
+
+function IconRunToEnd() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+      <path d="M1.5 3.5 L7.5 8 L1.5 12.5 Z" />
+      <path d="M8.5 3.5 L14.5 8 L8.5 12.5 Z" />
+    </svg>
+  );
+}
+
+function IconRestart() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M8 3 a5 5 0 1 0 5 5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path d="M8 0.5 L8 5.5 L11.8 3 Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function SolverControls() {
   const status = useAppStore((s) => s.status);
   const steps = useAppStore((s) => s.steps);
@@ -45,24 +106,16 @@ export default function SolverControls() {
   const toggleAuto = useAppStore((s) => s.toggleAuto);
   const toggleCheckMode = useAppStore((s) => s.toggleCheckMode);
   const startSolver = useAppStore((s) => s.startSolver);
-  const setView = useAppStore((s) => s.setView);
 
   const total = grid.length * (grid[0]?.length ?? 0);
   const known = grid.flat().filter((c) => c !== UNKNOWN).length;
   const finished = status === 'solved' || status === 'contradiction';
-  const lastStep = steps[steps.length - 1];
 
-  let statusText: string;
-  let statusClass: string;
+  // Komunikat tylko dla stanów wymagających uwagi użytkownika; zwykły postęp
+  // widać na planszy i liczniku kroków.
+  let statusText: string | null = null;
+  let statusClass = '';
   switch (status) {
-    case 'ready':
-      statusText = 'Gotowy do rozwiązywania.';
-      statusClass = 'text-gray-600';
-      break;
-    case 'progress':
-      statusText = `W trakcie: ${known}/${total} komórek pewnych.`;
-      statusClass = 'text-blue-700';
-      break;
     case 'solved':
       statusText = `Rozwiązane w ${steps.length} krokach.`;
       statusClass = 'text-green-700';
@@ -77,43 +130,69 @@ export default function SolverControls() {
       break;
   }
 
+  const autoLabel = autoPlay ? 'Pauza' : 'Auto';
   return (
     <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={stepOnce} disabled={finished || autoPlay} className={BUTTON}>
-          1 krok
-        </button>
-        <button onClick={toggleAuto} disabled={finished} className={BUTTON}>
-          {autoPlay ? '⏸ Pauza' : '▶ Auto'}
-        </button>
-        <button onClick={runAll} disabled={finished || autoPlay} className={BUTTON}>
-          Do końca
-        </button>
-        <button onClick={undoStep} disabled={steps.length === 0 || autoPlay} className={BUTTON}>
-          Cofnij
+        <button
+          onClick={undoStep}
+          disabled={steps.length === 0 || autoPlay}
+          title="Cofnij krok"
+          aria-label="Cofnij krok"
+          className={ICON_BUTTON}
+        >
+          <IconStepBack />
         </button>
         <button
-          onClick={toggleCheckMode}
-          className={
-            checkMode
-              ? 'rounded border border-emerald-400 bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-800 hover:bg-emerald-100'
-              : BUTTON
-          }
+          onClick={toggleAuto}
+          disabled={finished}
+          title={autoLabel}
+          aria-label={autoLabel}
+          className={ICON_BUTTON}
         >
-          Sprawdź pole
+          {autoPlay ? <IconPause /> : <IconPlay />}
         </button>
-        <button onClick={startSolver} className={BUTTON}>
-          Od nowa
+        <button
+          onClick={stepOnce}
+          disabled={finished || autoPlay}
+          title="Następny krok"
+          aria-label="Następny krok"
+          className={ICON_BUTTON}
+        >
+          <IconStepForward />
         </button>
-        <span className="ml-auto text-sm text-gray-500">Krok {steps.length}</span>
-        <button onClick={() => setView('editor')} className={BUTTON}>
-          Wróć do edycji
+        <button
+          onClick={runAll}
+          disabled={finished || autoPlay}
+          title="Do końca"
+          aria-label="Do końca"
+          className={ICON_BUTTON}
+        >
+          <IconRunToEnd />
         </button>
+        <button
+          onClick={startSolver}
+          title="Od nowa"
+          aria-label="Od nowa"
+          className={ICON_BUTTON}
+        >
+          <IconRestart />
+        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={toggleCheckMode}
+            className={
+              checkMode
+                ? 'rounded border border-emerald-400 bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-800 hover:bg-emerald-100'
+                : 'rounded border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium hover:bg-gray-100'
+            }
+          >
+            Sprawdź pole
+          </button>
+          <span className="text-sm text-gray-500">Krok {steps.length}</span>
+        </div>
       </div>
-      <p className={`text-sm font-medium ${statusClass}`}>{statusText}</p>
-      {lastStep && status !== 'ready' && (
-        <p className="text-sm text-gray-600">{describeStep(lastStep)}</p>
-      )}
+      {statusText && <p className={`text-sm font-medium ${statusClass}`}>{statusText}</p>}
       {checkMode &&
         (() => {
           const message = checkMessage(checkResult);

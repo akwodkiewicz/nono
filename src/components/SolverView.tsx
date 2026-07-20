@@ -27,8 +27,16 @@ export default function SolverView() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const setView = useAppStore((s) => s.setView);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      <button
+        onClick={() => setView('editor')}
+        className="text-sm text-gray-500 hover:text-gray-800 hover:underline"
+      >
+        ← Edytor wskazówek
+      </button>
       <SolverControls />
       <StepExplanation />
       <div className="flex flex-col gap-4 lg:flex-row">
