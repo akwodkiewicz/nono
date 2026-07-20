@@ -2,12 +2,21 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { cluesFromGrid, gridFromStrings } from '../solver/clues';
 import { Solver, type SolverStatus, type StepResult } from '../solver/solver';
-import type { Grid, LineRef, Puzzle, SolveStep } from '../solver/types';
+import { EMPTY, FILLED, type Grid, type LineRef, type Puzzle, type SolveStep } from '../solver/types';
 import { validatePuzzle } from '../solver/validate';
 import { formatClue, parseClueText } from './clueText';
 
 export type View = 'editor' | 'import' | 'solver';
 export type UiStatus = 'ready' | SolverStatus;
+
+/** Wynik sprawdzenia pola: stan komórki w ukrytym pełnym rozwiązaniu. */
+export type CheckCellState = 'filled' | 'empty' | 'unknown' | 'invalid';
+
+export interface CheckResult {
+  row: number;
+  col: number;
+  state: CheckCellState;
+}
 
 export const MAX_SIZE = 60;
 
@@ -42,6 +51,9 @@ interface AppState {
   /** Indeks kroku oglądanego w historii; null = stan bieżący. */
   viewStep: number | null;
   autoPlay: boolean;
+  /** Tryb sprawdzania: tap w komórkę zdradza jej stan w pełnym rozwiązaniu. */
+  checkMode: boolean;
+  checkResult: CheckResult | null;
 
   setView: (view: View) => void;
   setRowText: (index: number, text: string) => void;
@@ -59,6 +71,8 @@ interface AppState {
   undoStep: () => void;
   toggleAuto: () => void;
   setViewStep: (index: number | null) => void;
+  toggleCheckMode: () => void;
+  checkCell: (row: number, col: number) => void;
 }
 
 /** Parsuje teksty wskazówek; null, gdy którakolwiek linia jest niepoprawna. */
@@ -82,6 +96,10 @@ export function parsePuzzle(rowTexts: string[], colTexts: string[]): Puzzle | nu
 // a do store'u trafiają jej niemutowalne migawki (React dostaje nowe referencje).
 let solver: Solver | null = null;
 let autoTimer: ReturnType<typeof setInterval> | null = null;
+
+// Ukryte pełne rozwiązanie do sprawdzania pojedynczych pól — liczone leniwie
+// osobną instancją solvera, żeby nie ruszać postępu widocznego na planszy.
+let solutionCache: { grid: Grid; status: SolverStatus } | null = null;
 
 function stopAutoTimer() {
   if (autoTimer !== null) {
@@ -127,6 +145,8 @@ export const useAppStore = create<AppState>()(
       contradiction: undefined,
       viewStep: null,
       autoPlay: false,
+      checkMode: false,
+      checkResult: null,
 
       setView: (view) => set({ view }),
       setRowText: (index, text) =>
@@ -154,7 +174,16 @@ export const useAppStore = create<AppState>()(
         if (!puzzle || validatePuzzle(puzzle).length > 0) return;
         stopAutoTimer();
         solver = new Solver(puzzle);
-        set({ view: 'solver', puzzle, viewStep: null, autoPlay: false, ...snapshot() });
+        solutionCache = null;
+        set({
+          view: 'solver',
+          puzzle,
+          viewStep: null,
+          autoPlay: false,
+          checkMode: false,
+          checkResult: null,
+          ...snapshot(),
+        });
       },
       stepOnce: () => {
         if (!solver) return;
@@ -198,6 +227,26 @@ export const useAppStore = create<AppState>()(
         set((s) => ({
           viewStep: index === null || index >= s.steps.length - 1 ? null : Math.max(0, index),
         })),
+      toggleCheckMode: () => set((s) => ({ checkMode: !s.checkMode, checkResult: null })),
+      checkCell: (row, col) => {
+        const { puzzle } = get();
+        if (!puzzle) return;
+        if (!solutionCache) {
+          const full = new Solver(puzzle);
+          const result = full.run();
+          solutionCache = { grid: full.grid.map((r) => [...r]), status: result.status };
+        }
+        const value = solutionCache.grid[row]?.[col];
+        const state: CheckCellState =
+          solutionCache.status === 'contradiction'
+            ? 'invalid'
+            : value === FILLED
+              ? 'filled'
+              : value === EMPTY
+                ? 'empty'
+                : 'unknown';
+        set({ checkResult: { row, col, state } });
+      },
     }),
     {
       name: 'nono-clues',

@@ -35,6 +35,8 @@ Całość działa **w przeglądarce, bez backendu** — zdjęcia i dane zagadki 
 | F2.6 | Historia kroków z możliwością cofania. |
 | F2.7 | Wykrywanie sprzeczności (efekt błędnych danych wejściowych) z komunikatem wskazującym problematyczną linię — pomocne przy korekcie błędów OCR. |
 | F2.8 | Gdy zagadka wymaga zgadywania (logika liniowa nie wystarcza), solver zatrzymuje się i jasno to komunikuje, pozostawiając częściowe rozwiązanie na planszy. |
+| F2.9 | **Sprawdzanie pojedynczego pola**: tryb, w którym tapnięcie komórki odpowiada, czy w ostatecznym rozwiązaniu jest zamalowana — bez zdradzania reszty rozwiązania (pełne rozwiązanie liczone po cichu osobną instancją solvera). |
+| F2.10 | **Wyjaśnienie kroku**: panel „Dlaczego ten krok?" wizualizuje legalne ułożenia bloków w analizowanej linii i ich część wspólną, z której wynika dedukcja. |
 
 ### F3. Interfejs planszy
 
@@ -43,6 +45,7 @@ Całość działa **w przeglądarce, bez backendu** — zdjęcia i dane zagadki 
 | F3.1 | Renderowanie planszy wraz ze wskazówkami, skalujące się do dużych zagadek (np. 50×50): zoom, przewijanie, pogrubione linie co 5 komórek. |
 | F3.2 | Wyróżnienie komórek wydedukowanych w ostatnim kroku oraz aktualnie analizowanej linii. |
 | F3.3 | Responsywność i wygodna obsługa na telefonie — to nim zwykle robione są zdjęcia zagadki. |
+| F3.4 | Sterowanie jak w czytniku e-booków: tap w prawą część planszy = następny krok, w lewą ⅓ = cofnięcie; na desktopie spacja/→ i ←. |
 
 ## Wymagania niefunkcjonalne
 

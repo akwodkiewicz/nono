@@ -1,11 +1,36 @@
+import { useEffect } from 'react';
+import { useAppStore } from '../state/store';
 import Board from './Board';
 import HistoryPanel from './HistoryPanel';
 import SolverControls from './SolverControls';
+import StepExplanation from './StepExplanation';
 
 export default function SolverView() {
+  // Skróty klawiaturowe: spacja/→ = krok dalej, ← = cofnij. Pomijamy zdarzenia
+  // z pól i przycisków (spacja na sfokusowanym przycisku już "klika").
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName)) return;
+      if (target.isContentEditable) return;
+      const s = useAppStore.getState();
+      if (s.autoPlay) return;
+      if (e.key === ' ' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (s.status !== 'solved' && s.status !== 'contradiction') s.stepOnce();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (s.steps.length > 0) s.undoStep();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <div className="space-y-4">
       <SolverControls />
+      <StepExplanation />
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="min-w-0 flex-1">
           <Board />

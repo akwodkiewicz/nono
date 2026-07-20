@@ -6,25 +6,22 @@ export function normalizeClue(clue: readonly number[]): number[] {
 }
 
 /**
- * Analiza pojedynczej linii metodą przecięcia wszystkich legalnych ułożeń.
- *
- * Dla bieżącego stanu linii i wskazówki wyznacza, które komórki mają tę samą
- * wartość w KAŻDYM legalnym ułożeniu bloków — tylko takie komórki wolno
- * oznaczyć, bo tylko one są w 100% pewne (bez hipotez i zgadywania).
- *
- * Zamiast wyliczać ułożenia jawnie (wykładniczo dużo), używa programowania
- * dynamicznego po stanach (pozycja w linii, liczba ułożonych bloków):
+ * Wspólne DP po sufiksach linii — fundament analizy linii (solveLine)
+ * i jawnej enumeracji ułożeń (enumeratePlacements):
  *  - `canComplete[pos][blk]` — czy sufiks linii od `pos` da się dokończyć
  *    blokami od `blk`, zgodnie z już oznaczonymi komórkami,
- *  - przejście "przód" po stanach osiągalnych z początku linii zaznacza,
- *    które komórki mogą być wypełnione, a które puste w jakimkolwiek
- *    pełnym legalnym ułożeniu.
- *
- * Zwraca `null`, gdy żadne ułożenie nie pasuje do bieżącego stanu
- * (sprzeczność). W przeciwnym razie zwraca nowy stan linii: komórki pewne
- * dostają FILLED/EMPTY, pozostałe zachowują dotychczasową wartość.
+ *  - `canPlace(pos, len)` — czy blok długości `len` może zaczynać się w `pos`:
+ *    mieści się w linii, nie nachodzi na komórki EMPTY, a komórka tuż za nim
+ *    (przerwa) nie jest FILLED.
  */
-export function solveLine(line: readonly Cell[], clueRaw: readonly number[]): Cell[] | null {
+export interface LineDp {
+  /** Wskazówka po normalizacji (bez zer). */
+  clue: number[];
+  canComplete: boolean[][];
+  canPlace: (pos: number, len: number) => boolean;
+}
+
+export function buildLineDp(line: readonly Cell[], clueRaw: readonly number[]): LineDp {
   const clue = normalizeClue(clueRaw);
   const n = line.length;
   const k = clue.length;
@@ -35,8 +32,6 @@ export function solveLine(line: readonly Cell[], clueRaw: readonly number[]): Ce
     emptyBefore[i + 1] = emptyBefore[i] + (line[i] === EMPTY ? 1 : 0);
   }
 
-  // Czy blok długości len może zaczynać się w pos: mieści się w linii,
-  // nie nachodzi na komórki EMPTY, a komórka tuż za nim (przerwa) nie jest FILLED.
   const canPlace = (pos: number, len: number): boolean => {
     if (pos + len > n) return false;
     if (emptyBefore[pos + len] - emptyBefore[pos] > 0) return false;
@@ -62,6 +57,30 @@ export function solveLine(line: readonly Cell[], clueRaw: readonly number[]): Ce
       canComplete[pos][blk] = ok;
     }
   }
+
+  return { clue, canComplete, canPlace };
+}
+
+/**
+ * Analiza pojedynczej linii metodą przecięcia wszystkich legalnych ułożeń.
+ *
+ * Dla bieżącego stanu linii i wskazówki wyznacza, które komórki mają tę samą
+ * wartość w KAŻDYM legalnym ułożeniu bloków — tylko takie komórki wolno
+ * oznaczyć, bo tylko one są w 100% pewne (bez hipotez i zgadywania).
+ *
+ * Zamiast wyliczać ułożenia jawnie (wykładniczo dużo), używa DP z buildLineDp;
+ * przejście "przód" po stanach osiągalnych z początku linii zaznacza, które
+ * komórki mogą być wypełnione, a które puste w jakimkolwiek pełnym legalnym
+ * ułożeniu.
+ *
+ * Zwraca `null`, gdy żadne ułożenie nie pasuje do bieżącego stanu
+ * (sprzeczność). W przeciwnym razie zwraca nowy stan linii: komórki pewne
+ * dostają FILLED/EMPTY, pozostałe zachowują dotychczasową wartość.
+ */
+export function solveLine(line: readonly Cell[], clueRaw: readonly number[]): Cell[] | null {
+  const { clue, canComplete, canPlace } = buildLineDp(line, clueRaw);
+  const n = line.length;
+  const k = clue.length;
 
   if (!canComplete[0][0]) return null;
 
