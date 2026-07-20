@@ -4,30 +4,49 @@ import { formatClue, parseClueText } from '../state/clueText';
 import { parsePuzzleJson, puzzleToJson } from '../state/puzzleJson';
 import { validatePuzzle, type ValidationIssue } from '../solver/validate';
 
+const ICON_BUTTON =
+  'shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30';
+
 function ClueList({
   label,
   hint,
   texts,
   invalid,
   onChange,
+  onReplace,
 }: {
   label: string;
   hint: string;
   texts: string[];
   invalid: (index: number) => boolean;
   onChange: (index: number, text: string) => void;
+  /** Podmienia całą listę — do wstawiania/usuwania linii w środku. */
+  onReplace: (texts: string[]) => void;
 }) {
+  const insertAfter = (index: number) => {
+    const next = [...texts];
+    next.splice(index + 1, 0, '');
+    onReplace(next);
+  };
+  const remove = (index: number) => {
+    if (texts.length <= 1) return;
+    onReplace(texts.filter((_, i) => i !== index));
+  };
+
   return (
     <div>
       <h3 className="font-semibold">{label}</h3>
       <p className="mb-2 text-sm text-gray-500">{hint}</p>
+      <button onClick={() => insertAfter(-1)} className={`${ICON_BUTTON} mb-1`}>
+        + dodaj linię na początku
+      </button>
       <ol className="space-y-1">
         {texts.map((text, i) => (
           <li key={i} className="flex items-center gap-2">
             <span className="w-6 text-right text-xs text-gray-400">{i + 1}</span>
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               value={text}
               onChange={(e) => onChange(i, e.target.value)}
               className={`w-full rounded border px-2 py-1 font-mono text-sm ${
@@ -36,6 +55,17 @@ function ClueList({
                   : 'border-gray-300 bg-white focus:border-blue-400'
               } focus:outline-none`}
             />
+            <button onClick={() => insertAfter(i)} title="Wstaw linię poniżej" className={ICON_BUTTON}>
+              +
+            </button>
+            <button
+              onClick={() => remove(i)}
+              disabled={texts.length <= 1}
+              title="Usuń tę linię"
+              className={ICON_BUTTON}
+            >
+              ✕
+            </button>
           </li>
         ))}
       </ol>
@@ -175,10 +205,11 @@ export default function ClueEditor() {
       <section className="grid gap-6 rounded-lg border border-gray-200 bg-white p-4 md:grid-cols-2">
         <ClueList
           label="Wiersze"
-          hint="Od góry do dołu; liczby oddzielone spacjami. Pusta linia = pusty wiersz."
+          hint="Od góry do dołu; liczby rozdzielaj spacją, kropką lub przecinkiem. Pusta linia = pusty wiersz."
           texts={rowTexts}
           invalid={(i) => rowParseError(i) || issueOnLine('row', i)}
           onChange={setRowText}
+          onReplace={setRowTexts}
         />
         <ClueList
           label="Kolumny"
@@ -186,6 +217,7 @@ export default function ClueEditor() {
           texts={colTexts}
           invalid={(i) => colParseError(i) || issueOnLine('col', i)}
           onChange={setColText}
+          onReplace={setColTexts}
         />
       </section>
 

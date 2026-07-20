@@ -8,6 +8,12 @@ describe('parseClueText', () => {
     expect(parseClueText('10')).toEqual([10]);
   });
 
+  it('akceptuje kropkę i myślnik jako separatory (klawiatura numeryczna)', () => {
+    expect(parseClueText('3.1.2')).toEqual([3, 1, 2]);
+    expect(parseClueText('3-1-2')).toEqual([3, 1, 2]);
+    expect(parseClueText('3. 1,2-4')).toEqual([3, 1, 2, 4]);
+  });
+
   it('pusty tekst to pusta linia', () => {
     expect(parseClueText('')).toEqual([]);
     expect(parseClueText('   ')).toEqual([]);
@@ -16,8 +22,8 @@ describe('parseClueText', () => {
 
   it('odrzuca nie-liczby', () => {
     expect(parseClueText('3 a')).toBeNull();
-    expect(parseClueText('1.5')).toBeNull();
-    expect(parseClueText('-2')).toBeNull();
+    expect(parseClueText('x')).toBeNull();
+    expect(parseClueText('3?1')).toBeNull();
   });
 });
 

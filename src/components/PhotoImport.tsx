@@ -20,6 +20,9 @@ function confidenceClass(line: OcrLine): string {
   return 'border-gray-300 bg-white';
 }
 
+const ICON_BUTTON =
+  'shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30';
+
 function PhotoSlot({
   title,
   hint,
@@ -27,6 +30,8 @@ function PhotoSlot({
   slot,
   onFile,
   onTextChange,
+  onInsertLine,
+  onDeleteLine,
 }: {
   title: string;
   hint: string;
@@ -34,6 +39,9 @@ function PhotoSlot({
   slot: SlotState;
   onFile: (file: File) => void;
   onTextChange: (index: number, text: string) => void;
+  /** Wstawia pustą linię PO podanym indeksie (-1 = na początku). */
+  onInsertLine: (index: number) => void;
+  onDeleteLine: (index: number) => void;
 }) {
   return (
     <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
@@ -68,8 +76,14 @@ function PhotoSlot({
         <div className="space-y-2">
           <p className="text-sm text-gray-600">
             Odczytano {slot.texts.length} linii. Porównaj wycinki z odczytem i popraw błędy —
-            znak <span className="font-mono">?</span> oznacza nierozpoznaną liczbę.
+            znak <span className="font-mono">?</span> oznacza nierozpoznaną liczbę. Liczby
+            rozdzielaj spacją, kropką lub przecinkiem. Brakującą linię dodasz przyciskiem{' '}
+            <span className="font-mono">+</span> (wstawia poniżej), nadmiarową usuniesz{' '}
+            <span className="font-mono">✕</span>.
           </p>
+          <button onClick={() => onInsertLine(-1)} className={ICON_BUTTON}>
+            + dodaj linię na początku
+          </button>
           <ol className="space-y-1.5">
             {slot.texts.map((text, i) => (
               <li key={i} className="flex items-center gap-2">
@@ -89,13 +103,28 @@ function PhotoSlot({
                 </span>
                 <input
                   type="text"
-                  inputMode="numeric"
+                  inputMode="decimal"
                   value={text}
                   onChange={(e) => onTextChange(i, e.target.value)}
                   className={`w-full rounded border px-2 py-1 font-mono text-sm focus:outline-none ${confidenceClass(
                     slot.lines![i],
                   )}`}
                 />
+                <button
+                  onClick={() => onInsertLine(i)}
+                  title="Wstaw linię poniżej"
+                  className={ICON_BUTTON}
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => onDeleteLine(i)}
+                  disabled={slot.texts!.length <= 1}
+                  title="Usuń tę linię"
+                  className={ICON_BUTTON}
+                >
+                  ✕
+                </button>
               </li>
             ))}
           </ol>
@@ -137,6 +166,32 @@ export default function PhotoImport() {
     }));
   };
 
+  // Ręczna korekta struktury, gdy segmentacja zgubiła linię albo dodała
+  // fantomową: wstawiona linia nie ma wycinków OCR (pusty tokens).
+  const insertLine = (orientation: Orientation) => (index: number) => {
+    const setSlot = orientation === 'rows' ? setRowsSlot : setColsSlot;
+    setSlot((s) => {
+      if (!s.texts || !s.lines) return s;
+      const texts = [...s.texts];
+      const lines = [...s.lines];
+      texts.splice(index + 1, 0, '');
+      lines.splice(index + 1, 0, { tokens: [] });
+      return { ...s, texts, lines };
+    });
+  };
+
+  const deleteLine = (orientation: Orientation) => (index: number) => {
+    const setSlot = orientation === 'rows' ? setRowsSlot : setColsSlot;
+    setSlot((s) => {
+      if (!s.texts || !s.lines || s.texts.length <= 1) return s;
+      return {
+        ...s,
+        texts: s.texts.filter((_, i) => i !== index),
+        lines: s.lines.filter((_, i) => i !== index),
+      };
+    });
+  };
+
   const canApply = rowsSlot.texts !== null || colsSlot.texts !== null;
   const apply = () => {
     if (rowsSlot.texts) setRowTexts(rowsSlot.texts);
@@ -158,6 +213,8 @@ export default function PhotoImport() {
           slot={rowsSlot}
           onFile={(f) => process('rows', f)}
           onTextChange={editText('rows')}
+          onInsertLine={insertLine('rows')}
+          onDeleteLine={deleteLine('rows')}
         />
         <PhotoSlot
           title="Wskazówki kolumn (zdjęcie poziome)"
@@ -166,6 +223,8 @@ export default function PhotoImport() {
           slot={colsSlot}
           onFile={(f) => process('cols', f)}
           onTextChange={editText('cols')}
+          onInsertLine={insertLine('cols')}
+          onDeleteLine={deleteLine('cols')}
         />
       </div>
       <div className="flex gap-2">

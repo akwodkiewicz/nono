@@ -1,12 +1,15 @@
 /**
  * Parsuje tekst wskazówki jednej linii ("3 1 2" → [3, 1, 2]).
- * Separatorem są spacje i/lub przecinki; pusty tekst to pusta linia.
- * Zwraca null, gdy tekst zawiera coś innego niż liczby.
+ * Separatorem są spacje, przecinki, kropki i myślniki — kropka/przecinek są
+ * dostępne na mobilnej klawiaturze numerycznej (inputMode="decimal"), więc
+ * na telefonie da się rozdzielać liczby bez pełnej klawiatury.
+ * Pusty tekst to pusta linia. Zwraca null, gdy tekst zawiera coś innego
+ * niż liczby i separatory.
  */
 export function parseClueText(text: string): number[] | null {
   const tokens = text
     .trim()
-    .split(/[\s,]+/)
+    .split(/[\s,.\-]+/)
     .filter((token) => token.length > 0);
   const clue: number[] = [];
   for (const token of tokens) {
