@@ -89,6 +89,8 @@ src/
 2. ✅ **UI planszy i ręczna edycja** — renderowanie planszy, edytor wskazówek, walidacja; aplikacja w pełni użyteczna jeszcze bez OCR.
 3. ✅ **Wczytywanie ze zdjęć** — pipeline preprocessingu i OCR, ekran weryfikacji i korekty odczytu.
 4. ✅ **Szlif** — tryb krokowy z historią i podglądem, tryb automatyczny z animacją, zapis sesji (localStorage), eksport/import JSON, deploy na GitHub Pages.
+5. ✅ **Solver jako przewodnik** — sprawdzanie pojedynczego pola, strefy dotyku „dalej/wstecz" ze skrótami klawiaturowymi, panel wyjaśnienia kroku.
+6. ⬜ **Tryb pomocnika** — edycja planszy stanem z kartki + podpowiedź, na którą linię patrzeć; plan techniczny w [docs/tryb-pomocnika.md](docs/tryb-pomocnika.md).
 
 ## Uruchomienie lokalne
 
