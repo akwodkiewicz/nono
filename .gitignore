@@ -2,3 +2,6 @@ node_modules/
 dist/
 *.local
 .DS_Store
+.debug-build/
+.debug-entry.ts
+.debug-solver.ts
