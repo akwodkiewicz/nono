@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { gridAfterSteps } from '../solver/history';
 import { TOTAL_CAP, enumeratePlacements } from '../solver/placements';
 import { EMPTY, FILLED, type Cell, type SolveStep } from '../solver/types';
 import { lineLabel } from '../state/stepText';
 import { useAppStore } from '../state/store';
+import CellX from './CellX';
 
 /** Ile ułożeń pokazywać w wizualizacji, zanim zaczniemy obcinać. */
 const PLACEMENT_LIMIT = 8;
@@ -25,17 +26,17 @@ function MiniLine({
         {cells.map((cell, i) => {
           const marked = highlight?.has(i) ?? false;
           let cls = 'bg-white';
-          let content = '';
+          let content: ReactNode = null;
           if (cell === FILLED) {
             cls = marked ? 'bg-amber-500' : 'bg-gray-800';
           } else if (cell === EMPTY) {
-            content = '·';
-            cls = marked ? 'bg-amber-100 font-bold text-amber-700' : 'text-gray-400';
+            content = <CellX className={marked ? 'text-amber-600' : 'text-gray-300'} />;
+            if (marked) cls = 'bg-amber-100';
           }
           return (
             <div
               key={i}
-              className={`flex h-4 w-4 shrink-0 items-center justify-center border border-gray-300 text-[10px] ${cls}`}
+              className={`flex h-4 w-4 shrink-0 items-center justify-center border border-gray-300 ${cls}`}
             >
               {content}
             </div>

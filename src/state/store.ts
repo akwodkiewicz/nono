@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { cluesFromGrid, gridFromStrings } from '../solver/clues';
-import { Solver, type SolverStatus, type StepResult } from '../solver/solver';
+import { Solver, restoreSolver, type SolverStatus, type StepResult } from '../solver/solver';
 import { EMPTY, FILLED, type Grid, type LineRef, type Puzzle, type SolveStep } from '../solver/types';
 import { validatePuzzle } from '../solver/validate';
 import { formatClue, parseClueText } from './clueText';
@@ -19,9 +19,6 @@ export interface CheckResult {
 }
 
 export const MAX_SIZE = 60;
-
-/** Odstęp między krokami w trybie automatycznym. */
-const AUTO_INTERVAL_MS = 150;
 
 const EXAMPLE = cluesFromGrid(
   gridFromStrings([
@@ -50,7 +47,6 @@ interface AppState {
   contradiction?: LineRef;
   /** Indeks kroku oglądanego w historii; null = stan bieżący. */
   viewStep: number | null;
-  autoPlay: boolean;
   /** Tryb sprawdzania: tap w komórkę zdradza jej stan w pełnym rozwiązaniu. */
   checkMode: boolean;
   checkResult: CheckResult | null;
@@ -67,9 +63,7 @@ interface AppState {
   clearClues: () => void;
   startSolver: () => void;
   stepOnce: () => void;
-  runAll: () => void;
   undoStep: () => void;
-  toggleAuto: () => void;
   setViewStep: (index: number | null) => void;
   toggleCheckMode: () => void;
   checkCell: (row: number, col: number) => void;
@@ -95,17 +89,35 @@ export function parsePuzzle(rowTexts: string[], colTexts: string[]): Puzzle | nu
 // Instancja solvera żyje poza store'em: zawiera kolejkę i mutowalną planszę,
 // a do store'u trafiają jej niemutowalne migawki (React dostaje nowe referencje).
 let solver: Solver | null = null;
-let autoTimer: ReturnType<typeof setInterval> | null = null;
 
 // Ukryte pełne rozwiązanie do sprawdzania pojedynczych pól — liczone leniwie
 // osobną instancją solvera, żeby nie ruszać postępu widocznego na planszy.
 let solutionCache: { grid: Grid; status: SolverStatus } | null = null;
 
-function stopAutoTimer() {
-  if (autoTimer !== null) {
-    clearInterval(autoTimer);
-    autoTimer = null;
+// Postęp solvera przeżywa odświeżenie strony i aktualizację wersji aplikacji.
+// Instancja solvera nie jest serializowalna — odbudowuje ją ensureSolver
+// z zagadki i kroków. Ekran importu ma stan lokalny w komponencie, więc po
+// reloadzie wracamy z niego do edytora.
+const partializeState = (s: AppState) => ({
+  rowTexts: s.rowTexts,
+  colTexts: s.colTexts,
+  view: (s.view === 'import' ? 'editor' : s.view) as View,
+  puzzle: s.puzzle,
+  grid: s.grid,
+  steps: s.steps,
+  status: s.status,
+  contradiction: s.contradiction,
+});
+
+/**
+ * Instancja solvera nie jest persystowana — po przeładowaniu strony
+ * odbudowujemy ją przy pierwszym użyciu z zapisanej zagadki i kroków.
+ */
+function ensureSolver(state: AppState): Solver | null {
+  if (!solver && state.puzzle) {
+    solver = restoreSolver(state.puzzle, state.steps);
   }
+  return solver;
 }
 
 function snapshot(result?: StepResult) {
@@ -144,7 +156,6 @@ export const useAppStore = create<AppState>()(
       status: 'ready',
       contradiction: undefined,
       viewStep: null,
-      autoPlay: false,
       checkMode: false,
       checkResult: null,
 
@@ -172,56 +183,30 @@ export const useAppStore = create<AppState>()(
         const { rowTexts, colTexts } = get();
         const puzzle = parsePuzzle(rowTexts, colTexts);
         if (!puzzle || validatePuzzle(puzzle).length > 0) return;
-        stopAutoTimer();
         solver = new Solver(puzzle);
         solutionCache = null;
         set({
           view: 'solver',
           puzzle,
           viewStep: null,
-          autoPlay: false,
           checkMode: false,
           checkResult: null,
           ...snapshot(),
         });
       },
       stepOnce: () => {
-        if (!solver) return;
-        set({ viewStep: null, ...snapshot(solver.step()) });
-      },
-      runAll: () => {
-        if (!solver) return;
-        stopAutoTimer();
-        set({ viewStep: null, autoPlay: false, ...snapshot(solver.run()) });
+        const s = ensureSolver(get());
+        if (!s) return;
+        set({ viewStep: null, ...snapshot(s.step()) });
       },
       undoStep: () => {
-        if (!solver || !solver.undo()) return;
-        stopAutoTimer();
+        const s = ensureSolver(get());
+        if (!s || !s.undo()) return;
         set({
           viewStep: null,
-          autoPlay: false,
           ...snapshot(),
-          status: solver.steps.length > 0 ? 'progress' : 'ready',
+          status: s.steps.length > 0 ? 'progress' : 'ready',
         });
-      },
-      toggleAuto: () => {
-        if (get().autoPlay) {
-          stopAutoTimer();
-          set({ autoPlay: false });
-          return;
-        }
-        if (!solver) return;
-        set({ autoPlay: true, viewStep: null });
-        autoTimer = setInterval(() => {
-          if (!solver) {
-            stopAutoTimer();
-            return;
-          }
-          const result = solver.step();
-          const finished = result.status !== 'progress';
-          if (finished) stopAutoTimer();
-          set({ ...snapshot(result), ...(finished ? { autoPlay: false } : {}) });
-        }, AUTO_INTERVAL_MS);
       },
       setViewStep: (index) =>
         set((s) => ({
@@ -250,10 +235,11 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'nono-clues',
-      // Zapisujemy tylko wpisane wskazówki — to one są żmudne do odtworzenia.
-      // Stan solvera jest tani do przeliczenia, a instancja i tak nie jest
-      // serializowalna.
-      partialize: (s) => ({ rowTexts: s.rowTexts, colTexts: s.colTexts }),
+      version: 1,
+      partialize: partializeState,
+      // Wersja 0 zapisywała podzbiór pól (same teksty wskazówek) — merge
+      // uzupełnia brakujące wartościami domyślnymi.
+      migrate: (persisted) => persisted as ReturnType<typeof partializeState>,
     },
   ),
 );

@@ -9,6 +9,7 @@ import { gridAfterSteps } from '../solver/history';
 import { normalizeClue } from '../solver/line';
 import { EMPTY, FILLED, type LineRef } from '../solver/types';
 import { useAppStore } from '../state/store';
+import CellX from './CellX';
 
 function onLine(line: LineRef | undefined, row: number, col: number): boolean {
   if (!line) return false;
@@ -28,7 +29,6 @@ export default function Board() {
   const viewStep = useAppStore((s) => s.viewStep);
   const contradictionNow = useAppStore((s) => s.contradiction);
   const status = useAppStore((s) => s.status);
-  const autoPlay = useAppStore((s) => s.autoPlay);
   const checkMode = useAppStore((s) => s.checkMode);
   const checkResult = useAppStore((s) => s.checkResult);
   const stepOnce = useAppStore((s) => s.stepOnce);
@@ -81,7 +81,6 @@ export default function Board() {
       if (cell) checkCell(Number(cell.dataset.row), Number(cell.dataset.col));
       return;
     }
-    if (autoPlay) return;
     const rect = e.currentTarget.getBoundingClientRect();
     if (e.clientX - rect.left < rect.width / 3) {
       if (steps.length > 0) undoStep();
@@ -189,9 +188,7 @@ export default function Board() {
       if (value === FILLED) {
         background = isChanged ? 'bg-amber-500' : 'bg-gray-900';
       } else if (value === EMPTY) {
-        content = (
-          <span className={isChanged ? 'font-bold text-amber-600' : 'text-gray-300'}>·</span>
-        );
+        content = <CellX className={isChanged ? 'text-amber-600' : 'text-gray-300'} />;
         background = isChanged ? 'bg-amber-50' : 'bg-white';
       }
       if (value !== FILLED) {

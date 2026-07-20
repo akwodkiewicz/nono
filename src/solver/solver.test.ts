@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cluesFromGrid, gridFromStrings } from './clues';
-import { Solver } from './solver';
+import { Solver, restoreSolver } from './solver';
 import { EMPTY, FILLED, UNKNOWN, type Grid } from './types';
 
 function gridToStrings(grid: Grid): string[] {
@@ -120,5 +120,33 @@ describe('Solver', () => {
   it('undo na świeżym solverze nic nie robi', () => {
     const solver = new Solver({ rowClues: [[1]], colClues: [[1]] });
     expect(solver.undo()).toBeUndefined();
+  });
+
+  it('restoreSolver odtwarza stan częściowy i pozwala dokończyć', () => {
+    const art = ['..#..', '..#..', '#####', '..#..', '..#..'];
+    const puzzle = cluesFromGrid(gridFromStrings(art));
+    const original = new Solver(puzzle);
+    original.step();
+    original.step();
+
+    const restored = restoreSolver(puzzle, [...original.steps]);
+    expect(gridToStrings(restored.grid)).toEqual(gridToStrings(original.grid));
+    expect(restored.steps).toHaveLength(2);
+    // Undo działa też na odtworzonych krokach.
+    expect(restored.undo()?.deductions.length).toBeGreaterThan(0);
+    const result = restored.run();
+    expect(result.status).toBe('solved');
+    expect(gridToStrings(restored.grid)).toEqual(art);
+  });
+
+  it('restoreSolver stanu pełnego → step() zwraca solved', () => {
+    const art = ['..#..', '..#..', '#####', '..#..', '..#..'];
+    const puzzle = cluesFromGrid(gridFromStrings(art));
+    const original = new Solver(puzzle);
+    expect(original.run().status).toBe('solved');
+
+    const restored = restoreSolver(puzzle, [...original.steps]);
+    expect(restored.isSolved()).toBe(true);
+    expect(restored.step().status).toBe('solved');
   });
 });

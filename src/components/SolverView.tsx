@@ -14,7 +14,6 @@ export default function SolverView() {
       if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName)) return;
       if (target.isContentEditable) return;
       const s = useAppStore.getState();
-      if (s.autoPlay) return;
       if (e.key === ' ' || e.key === 'ArrowRight') {
         e.preventDefault();
         if (s.status !== 'solved' && s.status !== 'contradiction') s.stepOnce();

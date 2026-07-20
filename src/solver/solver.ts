@@ -175,3 +175,20 @@ export class Solver {
 function lineKey(ref: LineRef): string {
   return `${ref.kind}:${ref.index}`;
 }
+
+/**
+ * Odtwarza solver z zapisanej historii kroków (persistencja sesji).
+ * Kolejka startuje ze wszystkimi liniami — dokładnie tak jak po undo() —
+ * więc dalsze krokowanie jest poprawne niezależnie od tego, jak wyglądała
+ * kolejka w chwili zapisu.
+ */
+export function restoreSolver(puzzle: Puzzle, steps: readonly SolveStep[]): Solver {
+  const solver = new Solver(puzzle);
+  for (const step of steps) {
+    for (const d of step.deductions) {
+      solver.grid[d.row][d.col] = d.value;
+    }
+    solver.steps.push(step);
+  }
+  return solver;
+}
