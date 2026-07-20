@@ -16,9 +16,19 @@ export default function HistoryPanel() {
 
   useEffect(() => {
     // Autoprzewijanie do bieżącego kroku (istotne w trybie auto).
+    // Celowo NIE scrollIntoView: gdy element jest poza viewportem, przewija
+    // też całą stronę i przyciski "uciekają" spod kursora. Przewijamy
+    // wyłącznie wewnętrzny kontener listy.
     const list = listRef.current;
-    const active = list?.querySelector('[data-active=true]');
-    active?.scrollIntoView({ block: 'nearest' });
+    const active = list?.querySelector<HTMLElement>('[data-active=true]');
+    if (!list || !active) return;
+    const listRect = list.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    if (activeRect.top < listRect.top) {
+      list.scrollTop += activeRect.top - listRect.top;
+    } else if (activeRect.bottom > listRect.bottom) {
+      list.scrollTop += activeRect.bottom - listRect.bottom;
+    }
   }, [current, steps.length]);
 
   if (steps.length === 0) {
