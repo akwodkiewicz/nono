@@ -1,6 +1,6 @@
 /**
- * Cienki X po przekątnych komórki — oznaczenie „na pewno pusta".
- * vector-effect utrzymuje 1px kreski niezależnie od rozmiaru komórki (zoomu).
+ * Thin X across the cell diagonals — the "certainly empty" mark.
+ * vector-effect keeps the stroke at 1px regardless of cell size (zoom).
  */
 export default function CellX({ className = '' }: { className?: string }) {
   return (

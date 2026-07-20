@@ -3,8 +3,9 @@ import { describeStepShort } from '../state/stepText';
 import { useAppStore } from '../state/store';
 
 /**
- * Lista wykonanych kroków; kliknięcie pokazuje stan planszy po danym kroku
- * (podgląd — nie cofa solvera). Ostatnia pozycja wraca do stanu bieżącego.
+ * List of executed steps; clicking shows the board state after a given step
+ * (a preview — it does not undo the solver). The last entry returns to the
+ * current state.
  */
 export default function HistoryPanel() {
   const steps = useAppStore((s) => s.steps);
@@ -15,10 +16,10 @@ export default function HistoryPanel() {
   const current = viewStep ?? steps.length - 1;
 
   useEffect(() => {
-    // Autoprzewijanie do bieżącego kroku (istotne w trybie auto).
-    // Celowo NIE scrollIntoView: gdy element jest poza viewportem, przewija
-    // też całą stronę i przyciski "uciekają" spod kursora. Przewijamy
-    // wyłącznie wewnętrzny kontener listy.
+    // Auto-scroll to the current step. Deliberately NOT scrollIntoView: when
+    // the element is outside the viewport it also scrolls the whole page and
+    // buttons "escape" from under the cursor. We scroll only the inner list
+    // container.
     const list = listRef.current;
     const active = list?.querySelector<HTMLElement>('[data-active=true]');
     if (!list || !active) return;
@@ -33,27 +34,27 @@ export default function HistoryPanel() {
 
   if (steps.length === 0) {
     return (
-      <aside className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
+      <aside className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
         Historia kroków pojawi się tutaj.
       </aside>
     );
   }
 
   return (
-    <aside className="rounded-lg border border-gray-200 bg-white p-4">
+    <aside className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-2 flex items-baseline justify-between">
         <h3 className="font-semibold">Historia</h3>
         {viewStep !== null && (
           <button
             onClick={() => setViewStep(null)}
-            className="text-xs font-medium text-blue-600 hover:underline"
+            className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
           >
             wróć do bieżącego
           </button>
         )}
       </div>
       {viewStep !== null && (
-        <p className="mb-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-700">
+        <p className="mb-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-700 dark:bg-amber-950 dark:text-amber-400">
           Podgląd kroku {viewStep + 1} z {steps.length} — plansza pokazuje stan historyczny.
         </p>
       )}
@@ -65,8 +66,8 @@ export default function HistoryPanel() {
               onClick={() => setViewStep(i)}
               className={`w-full rounded px-2 py-0.5 text-left font-mono text-xs ${
                 i === current
-                  ? 'bg-blue-100 font-semibold text-blue-800'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-100 font-semibold text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
               }`}
             >
               {i + 1}. {describeStepShort(step)}

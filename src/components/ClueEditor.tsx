@@ -5,7 +5,10 @@ import { parsePuzzleJson, puzzleToJson } from '../state/puzzleJson';
 import { validatePuzzle, type ValidationIssue } from '../solver/validate';
 
 const ICON_BUTTON =
-  'shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30';
+  'shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200';
+
+const SECONDARY_BUTTON =
+  'rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800';
 
 function ClueList({
   label,
@@ -20,7 +23,7 @@ function ClueList({
   texts: string[];
   invalid: (index: number) => boolean;
   onChange: (index: number, text: string) => void;
-  /** Podmienia całą listę — do wstawiania/usuwania linii w środku. */
+  /** Replaces the whole list — for inserting/removing lines in the middle. */
   onReplace: (texts: string[]) => void;
 }) {
   const insertAfter = (index: number) => {
@@ -36,14 +39,14 @@ function ClueList({
   return (
     <div>
       <h3 className="font-semibold">{label}</h3>
-      <p className="mb-2 text-sm text-gray-500">{hint}</p>
+      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">{hint}</p>
       <button onClick={() => insertAfter(-1)} className={`${ICON_BUTTON} mb-1`}>
         + dodaj linię na początku
       </button>
       <ol className="space-y-1">
         {texts.map((text, i) => (
           <li key={i} className="flex items-center gap-2">
-            <span className="w-6 text-right text-xs text-gray-400">{i + 1}</span>
+            <span className="w-6 text-right text-xs text-gray-400 dark:text-gray-500">{i + 1}</span>
             <input
               type="text"
               inputMode="decimal"
@@ -51,8 +54,8 @@ function ClueList({
               onChange={(e) => onChange(i, e.target.value)}
               className={`w-full rounded border px-2 py-1 font-mono text-sm ${
                 invalid(i)
-                  ? 'border-red-400 bg-red-50'
-                  : 'border-gray-300 bg-white focus:border-blue-400'
+                  ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950'
+                  : 'border-gray-300 bg-white focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900'
               } focus:outline-none`}
             />
             <button onClick={() => insertAfter(i)} title="Wstaw linię poniżej" className={ICON_BUTTON}>
@@ -91,7 +94,7 @@ function CountInput({
         max={MAX_SIZE}
         value={value}
         onChange={(e) => onChange(Number.parseInt(e.target.value, 10) || 1)}
-        className="w-16 rounded border border-gray-300 px-2 py-1"
+        className="w-16 rounded border border-gray-300 px-2 py-1 dark:border-gray-700 dark:bg-gray-900"
       />
     </label>
   );
@@ -147,39 +150,26 @@ export default function ClueEditor() {
 
   return (
     <div className="space-y-4">
-      <section className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 bg-white p-4">
+      <section className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <CountInput label="Wiersze:" value={rowTexts.length} onChange={setRowCount} />
         <CountInput label="Kolumny:" value={colTexts.length} onChange={setColCount} />
         <div className="ml-auto flex flex-wrap justify-end gap-2">
           <button
             onClick={() => setView('import')}
-            className="rounded border border-blue-300 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100"
+            className="rounded border border-blue-300 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
           >
             Wczytaj ze zdjęć
           </button>
-          <button
-            onClick={loadExample}
-            className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100"
-          >
+          <button onClick={loadExample} className={SECONDARY_BUTTON}>
             Wczytaj przykład
           </button>
-          <button
-            onClick={clearClues}
-            className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100"
-          >
+          <button onClick={clearClues} className={SECONDARY_BUTTON}>
             Wyczyść
           </button>
-          <button
-            onClick={exportJson}
-            disabled={!puzzle}
-            className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 disabled:opacity-40"
-          >
+          <button onClick={exportJson} disabled={!puzzle} className={`${SECONDARY_BUTTON} disabled:opacity-40`}>
             Eksport JSON
           </button>
-          <button
-            onClick={() => importInputRef.current?.click()}
-            className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100"
-          >
+          <button onClick={() => importInputRef.current?.click()} className={SECONDARY_BUTTON}>
             Import JSON
           </button>
           <input
@@ -197,12 +187,12 @@ export default function ClueEditor() {
       </section>
 
       {importError && (
-        <section className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <section className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
           {importError}
         </section>
       )}
 
-      <section className="grid gap-6 rounded-lg border border-gray-200 bg-white p-4 md:grid-cols-2">
+      <section className="grid gap-6 rounded-lg border border-gray-200 bg-white p-4 md:grid-cols-2 dark:border-gray-800 dark:bg-gray-900">
         <ClueList
           label="Wiersze"
           hint="Od góry do dołu; liczby rozdzielaj spacją, kropką lub przecinkiem. Pusta linia = pusty wiersz."
@@ -222,7 +212,7 @@ export default function ClueEditor() {
       </section>
 
       {(hasParseErrors || issues.length > 0) && (
-        <section className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <section className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
           <ul className="list-inside list-disc space-y-1">
             {hasParseErrors && <li>Niektóre wskazówki zawierają coś innego niż liczby.</li>}
             {issues.map((issue, i) => (
@@ -235,7 +225,7 @@ export default function ClueEditor() {
       <button
         onClick={startSolver}
         disabled={!canSolve}
-        className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+        className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-gray-700"
       >
         Rozwiązuj
       </button>

@@ -6,7 +6,7 @@ import { lineLabel } from '../state/stepText';
 import { useAppStore } from '../state/store';
 import CellX from './CellX';
 
-/** Ile ułożeń pokazywać w wizualizacji, zanim zaczniemy obcinać. */
+/** How many placements to visualize before truncating. */
 const PLACEMENT_LIMIT = 8;
 
 function MiniLine({
@@ -16,27 +16,35 @@ function MiniLine({
 }: {
   label: string;
   cells: readonly Cell[];
-  /** Pozycje wydedukowane w tym kroku — wyróżnione we wszystkich wierszach. */
+  /** Positions deduced in this step — emphasized in every row. */
   highlight?: ReadonlySet<number>;
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-24 shrink-0 text-right text-xs text-gray-500">{label}</span>
+      <span className="w-24 shrink-0 text-right text-xs text-gray-500 dark:text-gray-400">
+        {label}
+      </span>
       <div className="flex w-max">
         {cells.map((cell, i) => {
           const marked = highlight?.has(i) ?? false;
-          let cls = 'bg-white';
+          let cls = 'bg-white dark:bg-gray-900';
           let content: ReactNode = null;
           if (cell === FILLED) {
-            cls = marked ? 'bg-amber-500' : 'bg-gray-800';
+            cls = marked ? 'bg-amber-500' : 'bg-gray-800 dark:bg-gray-200';
           } else if (cell === EMPTY) {
-            content = <CellX className={marked ? 'text-amber-600' : 'text-gray-300'} />;
-            if (marked) cls = 'bg-amber-100';
+            content = (
+              <CellX
+                className={
+                  marked ? 'text-amber-600 dark:text-amber-400' : 'text-gray-300 dark:text-gray-600'
+                }
+              />
+            );
+            if (marked) cls = 'bg-amber-100 dark:bg-amber-900';
           }
           return (
             <div
               key={i}
-              className={`flex h-4 w-4 shrink-0 items-center justify-center border border-gray-300 ${cls}`}
+              className={`flex h-4 w-4 shrink-0 items-center justify-center border border-gray-300 dark:border-gray-600 ${cls}`}
             >
               {content}
             </div>
@@ -68,15 +76,19 @@ function Explanation({ step, lineBefore }: { step: SolveStep; lineBefore: Cell[]
   }
 
   if (!result) {
-    // Nie powinno się zdarzyć dla zapisanego kroku (krok = brak sprzeczności).
-    return <p className="text-sm text-red-700">Brak legalnych ułożeń dla tej linii.</p>;
+    // Should not happen for a recorded step (a step means no contradiction).
+    return (
+      <p className="text-sm text-red-700 dark:text-red-400">
+        Brak legalnych ułożeń dla tej linii.
+      </p>
+    );
   }
   const truncated = result.total > result.placements.length;
   const totalText = result.total >= TOTAL_CAP ? `co najmniej ${TOTAL_CAP}` : String(result.total);
 
   return (
     <div className="space-y-2 overflow-x-auto pb-1">
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-600 dark:text-gray-300">
         Solver wyznacza wszystkie ułożenia bloków [{step.clue.join(' ') || '0'}] w{' '}
         {lineLabel(step.line)} zgodne z dotychczasowym stanem. Komórki o tej samej wartości w
         każdym ułożeniu (wyróżnione) są pewne — to dokładnie wnioski tego kroku.
@@ -91,7 +103,7 @@ function Explanation({ step, lineBefore }: { step: SolveStep; lineBefore: Cell[]
         />
       ))}
       {truncated && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Pokazano {result.placements.length} z {totalText} ułożeń — najbardziej lewe i najbardziej
           prawe; pozostałe mieszczą się pomiędzy nimi.
         </p>
@@ -102,9 +114,9 @@ function Explanation({ step, lineBefore }: { step: SolveStep; lineBefore: Cell[]
 }
 
 /**
- * Rozwijany panel "dlaczego ten krok": wizualizacja legalnych ułożeń bloków
- * w analizowanej linii. Dotyczy kroku pokazywanego na planszy (podgląd
- * historii albo ostatni wykonany).
+ * Collapsible "why this step" panel: a visualization of the legal block
+ * placements in the analyzed line. Applies to the step shown on the board
+ * (history preview or the last executed one).
  */
 export default function StepExplanation() {
   const puzzle = useAppStore((s) => s.puzzle);
@@ -116,7 +128,7 @@ export default function StepExplanation() {
   const index = Math.min(viewStep ?? steps.length - 1, steps.length - 1);
   const step = steps[index];
 
-  // Stan linii sprzed kroku — rekonstrukcja z historii (kroki to diffy).
+  // Line state before the step — reconstructed from history (steps are diffs).
   const height = puzzle.rowClues.length;
   const width = puzzle.colClues.length;
   const before = gridAfterSteps(height, width, steps, index - 1);
@@ -124,10 +136,10 @@ export default function StepExplanation() {
     step.line.kind === 'row' ? before[step.line.index] : before.map((row) => row[step.line.index]);
 
   return (
-    <section className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+    <section className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4 dark:border-gray-800 dark:bg-gray-900">
       <button
         onClick={() => setOpen(!open)}
-        className="text-sm font-medium text-blue-600 hover:underline"
+        className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
       >
         {open ? '▾' : '▸'} Dlaczego ten krok? (krok {index + 1})
       </button>

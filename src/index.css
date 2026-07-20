@@ -1,1 +1,6 @@
 @import 'tailwindcss';
+
+/* Follow the system theme for browser-rendered UI (form controls, scrollbars). */
+:root {
+  color-scheme: light dark;
+}

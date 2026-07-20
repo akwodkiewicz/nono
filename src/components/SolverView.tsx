@@ -6,8 +6,8 @@ import SolverControls from './SolverControls';
 import StepExplanation from './StepExplanation';
 
 export default function SolverView() {
-  // Skróty klawiaturowe: spacja/→ = krok dalej, ← = cofnij. Pomijamy zdarzenia
-  // z pól i przycisków (spacja na sfokusowanym przycisku już "klika").
+  // Keyboard shortcuts: Space/→ = next step, ← = undo. Events from inputs and
+  // buttons are ignored (Space on a focused button already "clicks" it).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -32,7 +32,7 @@ export default function SolverView() {
     <div className="space-y-3">
       <button
         onClick={() => setView('editor')}
-        className="text-sm text-gray-500 hover:text-gray-800 hover:underline"
+        className="text-sm text-gray-500 hover:text-gray-800 hover:underline dark:text-gray-400 dark:hover:text-gray-200"
       >
         ← Edytor wskazówek
       </button>

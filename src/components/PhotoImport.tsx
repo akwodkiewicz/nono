@@ -12,16 +12,16 @@ interface SlotState {
 
 const idleSlot: SlotState = { running: false, progress: 0, lines: null, texts: null, error: null };
 
-/** Kolor obwódki wg najsłabszej pewności OCR w linii. */
+/** Border color based on the weakest OCR confidence in the line. */
 function confidenceClass(line: OcrLine): string {
   const worst = Math.min(100, ...line.tokens.map((t) => (t.value === null ? 0 : t.confidence)));
-  if (worst < 60) return 'border-red-400 bg-red-50';
-  if (worst < 85) return 'border-amber-400 bg-amber-50';
-  return 'border-gray-300 bg-white';
+  if (worst < 60) return 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950';
+  if (worst < 85) return 'border-amber-400 bg-amber-50 dark:border-amber-600 dark:bg-amber-950';
+  return 'border-gray-300 bg-white dark:border-gray-700 dark:bg-gray-900';
 }
 
 const ICON_BUTTON =
-  'shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30';
+  'shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200';
 
 function PhotoSlot({
   title,
@@ -39,15 +39,15 @@ function PhotoSlot({
   slot: SlotState;
   onFile: (file: File) => void;
   onTextChange: (index: number, text: string) => void;
-  /** Wstawia pustą linię PO podanym indeksie (-1 = na początku). */
+  /** Inserts an empty line AFTER the given index (-1 = at the beginning). */
   onInsertLine: (index: number) => void;
   onDeleteLine: (index: number) => void;
 }) {
   return (
-    <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
+    <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       <div>
         <h3 className="font-semibold">{title}</h3>
-        <p className="text-sm text-gray-500">{hint}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{hint}</p>
       </div>
       <input
         type="file"
@@ -56,25 +56,25 @@ function PhotoSlot({
           const file = e.target.files?.[0];
           if (file) onFile(file);
         }}
-        className="block w-full text-sm text-gray-600 file:mr-3 file:rounded file:border-0 file:bg-blue-600 file:px-4 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700"
+        className="block w-full text-sm text-gray-600 file:mr-3 file:rounded file:border-0 file:bg-blue-600 file:px-4 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700 dark:text-gray-300"
       />
       {slot.running && (
         <div>
-          <div className="h-2 overflow-hidden rounded bg-gray-200">
+          <div className="h-2 overflow-hidden rounded bg-gray-200 dark:bg-gray-700">
             <div
               className="h-full bg-blue-500 transition-all"
               style={{ width: `${Math.round(slot.progress * 100)}%` }}
             />
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Rozpoznawanie… {Math.round(slot.progress * 100)}%
           </p>
         </div>
       )}
-      {slot.error && <p className="text-sm text-red-600">Błąd: {slot.error}</p>}
+      {slot.error && <p className="text-sm text-red-600 dark:text-red-400">Błąd: {slot.error}</p>}
       {slot.texts && slot.lines && (
         <div className="space-y-2">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Odczytano {slot.texts.length} linii. Porównaj wycinki z odczytem i popraw błędy —
             znak <span className="font-mono">?</span> oznacza nierozpoznaną liczbę. Liczby
             rozdzielaj spacją, kropką lub przecinkiem. Brakującą linię dodasz przyciskiem{' '}
@@ -87,7 +87,7 @@ function PhotoSlot({
           <ol className="space-y-1.5">
             {slot.texts.map((text, i) => (
               <li key={i} className="flex items-center gap-2">
-                <span className="w-8 shrink-0 text-right text-xs text-gray-400">
+                <span className="w-8 shrink-0 text-right text-xs text-gray-400 dark:text-gray-500">
                   {lineLabel} {i + 1}
                 </span>
                 <span className="flex max-w-[45%] shrink-0 items-center gap-0.5 overflow-x-auto">
@@ -97,7 +97,7 @@ function PhotoSlot({
                       src={token.crop}
                       alt={token.value === null ? '?' : String(token.value)}
                       title={`pewność ${token.confidence}%`}
-                      className="h-6 rounded border border-gray-200"
+                      className="h-6 rounded border border-gray-200 dark:border-gray-700"
                     />
                   ))}
                 </span>
@@ -166,8 +166,8 @@ export default function PhotoImport() {
     }));
   };
 
-  // Ręczna korekta struktury, gdy segmentacja zgubiła linię albo dodała
-  // fantomową: wstawiona linia nie ma wycinków OCR (pusty tokens).
+  // Manual structure correction when segmentation lost a line or added a
+  // phantom one: an inserted line has no OCR crops (empty tokens).
   const insertLine = (orientation: Orientation) => (index: number) => {
     const setSlot = orientation === 'rows' ? setRowsSlot : setColsSlot;
     setSlot((s) => {
@@ -201,7 +201,7 @@ export default function PhotoImport() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-600 dark:text-gray-300">
         Zrób dwa zdjęcia wskazówek: osobno wierszy i osobno kolumn — łatwiej objąć je ostro
         w kadrze niż całą zagadkę naraz. Fotografuj prostopadle, przy równym świetle.
       </p>
@@ -231,13 +231,13 @@ export default function PhotoImport() {
         <button
           onClick={apply}
           disabled={!canApply}
-          className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+          className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-gray-700"
         >
           Przenieś do edytora
         </button>
         <button
           onClick={() => setView('editor')}
-          className="rounded-lg border border-gray-300 bg-white px-6 py-2 font-semibold hover:bg-gray-100"
+          className="rounded-lg border border-gray-300 bg-white px-6 py-2 font-semibold hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-900 dark:hover:bg-gray-800"
         >
           Anuluj
         </button>
