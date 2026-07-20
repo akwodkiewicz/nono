@@ -63,7 +63,7 @@ Całość działa **w przeglądarce, bez backendu** — zdjęcia i dane zagadki 
 | Styling | **Tailwind CSS** | Szybkie iterowanie nad UI bez utrzymywania osobnych arkuszy stylów. |
 | Stan aplikacji | **Zustand** | Lekki store bez boilerplate'u; wystarczający przy jednym głównym modelu danych. |
 | OCR | **Tesseract.js** (WASM) | OCR w całości w przeglądarce — darmowy, offline, bez wysyłania zdjęć na serwer. Tryb pojedynczego słowa/znaku + whitelist `0-9`; zasoby (worker, WASM, dane językowe) self-hostowane zamiast CDN. |
-| Preprocessing obrazu | **własny pipeline TS** + Canvas API | Skala szarości, binaryzacja Otsu, usuwanie linii siatki i segmentacja projekcjami atramentu — czysty TypeScript, testowalny w Node. OpenCV.js (korekcja perspektywy) można dołożyć później, gdy zdjęcia pod kątem okażą się problemem. |
+| Preprocessing obrazu | **własny pipeline TS** + Canvas API | Skala szarości, binaryzacja adaptacyjna (odporna na nierówne światło i tło wokół kartki), przycięcie do obszaru wskazówek po ramce siatki, czyszczenie przez spójne składowe (usuwa linie separatorów, ślady ołówka i szum — działa też przy wygiętej kartce) i segmentacja projekcjami atramentu. Czysty TypeScript z testami regresyjnymi na prawdziwych zdjęciach (test-fixtures/). OpenCV.js (korekcja perspektywy) można dołożyć, gdy zdjęcia pod ostrym kątem okażą się problemem. |
 | Współbieżność | **Web Workers** | OCR i solver poza wątkiem UI. |
 | Testy | **Vitest** | Naturalny wybór przy Vite; szybkie testy jednostkowe solvera i parserów. |
 | Jakość kodu | **ESLint + Prettier** | Standardowa higiena projektu. |

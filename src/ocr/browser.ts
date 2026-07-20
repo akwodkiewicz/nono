@@ -2,10 +2,12 @@ import type { Bitmap, RgbaImage } from './raster';
 
 /**
  * Wczytuje zdjęcie do ImageData, skalując w dół do maxDim — zdjęcia
- * z telefonu mają 12+ Mpx, a segmentacji i OCR wystarcza ~1600 px,
- * za to działa wielokrotnie szybciej.
+ * z telefonu mają 12+ Mpx, a segmentacji i OCR wystarcza ~2600 px,
+ * za to działa wielokrotnie szybciej. Mniejsze wymiary psują segmentację:
+ * odstępy między sąsiednimi liczbami robią się mniejsze niż odstępy między
+ * cyframi jednej liczby po przeskalowaniu.
  */
-export async function loadImageData(file: File, maxDim = 1600): Promise<RgbaImage> {
+export async function loadImageData(file: File, maxDim = 2600): Promise<RgbaImage> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
   const width = Math.max(1, Math.round(bitmap.width * scale));

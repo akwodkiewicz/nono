@@ -1,7 +1,7 @@
 import { bitmapToCanvas, loadImageData } from './browser';
-import { binarize, cropBitmap, grayscale, otsuThreshold, removeGridLines } from './raster';
+import { adaptiveBinarize, cropBitmap, grayscale } from './raster';
 import { recognizeDigits } from './recognize';
-import { segmentCluePhoto, type Orientation } from './segment';
+import { prepareCluePhoto, segmentCluePhoto, type Orientation } from './segment';
 
 export type { Orientation } from './segment';
 
@@ -18,13 +18,15 @@ export interface OcrLine {
 
 /**
  * Pełny pipeline odczytu wskazówek ze zdjęcia:
- * zdjęcie → skala szarości → binaryzacja (Otsu) → usunięcie linii siatki →
- * segmentacja na linie i tokeny → OCR każdego tokenu osobno.
+ * zdjęcie → skala szarości → binaryzacja adaptacyjna → przycięcie do obszaru
+ * wskazówek (po ramce siatki) i czyszczenie ze wszystkiego, co nie wygląda
+ * jak cyfra → segmentacja na linie i tokeny → OCR każdego tokenu osobno.
  *
- * OCR per token (a nie na całym zdjęciu) jest kluczowy: Tesseract z trybem
- * SINGLE_WORD i whitelistą cyfr na małym, czystym wycinku myli się rzadko,
- * a segmentacja i tak jest potrzebna, żeby wiedzieć, które liczby należą
- * do której linii.
+ * Binaryzacja adaptacyjna zamiast globalnego Otsu, bo zdjęcia z telefonu
+ * mają nierówne światło i tło wokół kartki. OCR per token (a nie na całym
+ * zdjęciu) jest kluczowy: Tesseract z whitelistą cyfr na małym, czystym
+ * wycinku myli się rzadko, a segmentacja i tak jest potrzebna, żeby
+ * wiedzieć, które liczby należą do której linii.
  */
 export async function readCluesFromPhoto(
   file: File,
@@ -33,8 +35,9 @@ export async function readCluesFromPhoto(
 ): Promise<OcrLine[]> {
   const image = await loadImageData(file);
   const gray = grayscale(image);
-  const threshold = otsuThreshold(gray);
-  const bmp = removeGridLines(binarize(gray, image.width, image.height, threshold));
+  const radius = Math.round(Math.max(image.width, image.height) / 32);
+  const bin = adaptiveBinarize(gray, image.width, image.height, radius);
+  const bmp = prepareCluePhoto(bin, orientation, gray);
 
   const lines = segmentCluePhoto(bmp, orientation);
   const total = lines.reduce((sum, tokens) => sum + tokens.length, 0);

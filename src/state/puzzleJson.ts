@@ -17,7 +17,11 @@ function isClueList(value: unknown): value is number[][] {
   );
 }
 
-/** Akceptuje też aliasy rows/cols; null gdy struktura się nie zgadza. */
+/**
+ * Akceptuje też aliasy rows/cols oraz ver/hor (spotykany format eksportu:
+ * "ver" to linie ze zdjęcia pionowego = wiersze, "hor" z poziomego = kolumny).
+ * Zwraca null, gdy struktura się nie zgadza.
+ */
 export function parsePuzzleJson(text: string): Puzzle | null {
   let raw: unknown;
   try {
@@ -27,8 +31,8 @@ export function parsePuzzleJson(text: string): Puzzle | null {
   }
   if (typeof raw !== 'object' || raw === null) return null;
   const obj = raw as Record<string, unknown>;
-  const rowClues = obj.rowClues ?? obj.rows;
-  const colClues = obj.colClues ?? obj.cols;
+  const rowClues = obj.rowClues ?? obj.rows ?? obj.ver;
+  const colClues = obj.colClues ?? obj.cols ?? obj.hor;
   if (!isClueList(rowClues) || !isClueList(colClues)) return null;
   return { rowClues, colClues };
 }

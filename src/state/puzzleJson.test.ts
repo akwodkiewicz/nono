@@ -7,10 +7,14 @@ describe('puzzleJson', () => {
     expect(parsePuzzleJson(puzzleToJson(puzzle))).toEqual(puzzle);
   });
 
-  it('akceptuje aliasy rows/cols', () => {
+  it('akceptuje aliasy rows/cols oraz ver/hor', () => {
     expect(parsePuzzleJson('{"rows": [[1]], "cols": [[1]]}')).toEqual({
       rowClues: [[1]],
       colClues: [[1]],
+    });
+    expect(parsePuzzleJson('{"ver": [[2, 1]], "hor": [[3]]}')).toEqual({
+      rowClues: [[2, 1]],
+      colClues: [[3]],
     });
   });
 
