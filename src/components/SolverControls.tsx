@@ -49,7 +49,7 @@ export default function SolverControls() {
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
+    <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={stepOnce} disabled={finished || autoPlay} className={BUTTON}>
           1 krok

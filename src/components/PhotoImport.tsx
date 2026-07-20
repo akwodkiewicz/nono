@@ -90,7 +90,7 @@ function PhotoSlot({
                 <span className="w-8 shrink-0 text-right text-xs text-gray-400">
                   {lineLabel} {i + 1}
                 </span>
-                <span className="flex shrink-0 items-center gap-0.5">
+                <span className="flex max-w-[45%] shrink-0 items-center gap-0.5 overflow-x-auto">
                   {slot.lines![i].tokens.map((token, j) => (
                     <img
                       key={j}

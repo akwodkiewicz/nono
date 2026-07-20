@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { gridAfterSteps } from '../solver/history';
 import { normalizeClue } from '../solver/line';
 import { EMPTY, FILLED, type LineRef } from '../solver/types';
@@ -23,6 +23,20 @@ export default function Board() {
   const contradictionNow = useAppStore((s) => s.contradiction);
   const [zoom, setZoom] = useState<number | null>(null);
 
+  // Szerokość kontenera (ResizeObserver) — domyślny rozmiar komórki dopasowuje
+  // planszę do ekranu zamiast do stałej szerokości; kluczowe na telefonach.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   if (!puzzle) return null;
 
   const height = puzzle.rowClues.length;
@@ -38,12 +52,18 @@ export default function Board() {
   const lastStep = steps[viewStep ?? steps.length - 1];
   const changed = new Set(lastStep?.deductions.map((d) => `${d.row}:${d.col}`) ?? []);
 
-  const autoSize = Math.max(12, Math.min(30, Math.floor(600 / Math.max(width, height))));
-  const size = zoom ?? autoSize;
-  const fontSize = Math.max(9, Math.round(size * 0.48));
-
   const rcMax = Math.max(1, ...rowClues.map((c) => c.length));
   const ccMax = Math.max(1, ...colClues.map((c) => c.length));
+
+  // Dopasuj rozmiar komórki tak, żeby plansza (wskazówki + siatka) mieściła
+  // się w szerokości kontenera; suwak zoomu nadpisuje dopasowanie.
+  const widthUnits = rcMax * 0.9 + width;
+  const fitSize = containerWidth
+    ? Math.floor(containerWidth / widthUnits)
+    : Math.floor(600 / Math.max(width, height));
+  const autoSize = Math.max(6, Math.min(30, fitSize));
+  const size = zoom ?? autoSize;
+  const fontSize = Math.max(7, Math.round(size * 0.48));
 
   const cells: ReactNode[] = [];
 
@@ -150,13 +170,21 @@ export default function Board() {
         <span>Zoom</span>
         <input
           type="range"
-          min={10}
+          min={6}
           max={40}
           value={size}
           onChange={(e) => setZoom(Number.parseInt(e.target.value, 10))}
         />
+        {zoom !== null && (
+          <button
+            onClick={() => setZoom(null)}
+            className="rounded border border-gray-300 bg-white px-2 py-0.5 text-xs hover:bg-gray-100"
+          >
+            dopasuj
+          </button>
+        )}
       </div>
-      <div className="overflow-auto rounded-lg border border-gray-200 bg-white p-4">
+      <div ref={wrapRef} className="overflow-auto rounded-lg border border-gray-200 bg-white p-2 sm:p-4">
         <div
           className="inline-grid"
           style={{

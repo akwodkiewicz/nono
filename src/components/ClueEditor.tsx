@@ -150,7 +150,7 @@ export default function ClueEditor() {
       <section className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 bg-white p-4">
         <CountInput label="Wiersze:" value={rowTexts.length} onChange={setRowCount} />
         <CountInput label="Kolumny:" value={colTexts.length} onChange={setColCount} />
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex flex-wrap justify-end gap-2">
           <button
             onClick={() => setView('import')}
             className="rounded border border-blue-300 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100"

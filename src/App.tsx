@@ -14,7 +14,7 @@ export default function App() {
           <span className="text-sm text-gray-500">solver nonogramów</span>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl p-4">
+      <main className="mx-auto max-w-5xl px-2 py-3 sm:p-4">
         {view === 'editor' && <ClueEditor />}
         {view === 'import' && <PhotoImport />}
         {view === 'solver' && <SolverView />}
