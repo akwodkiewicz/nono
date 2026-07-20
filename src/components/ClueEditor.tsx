@@ -1,5 +1,7 @@
+import { useRef, useState } from 'react';
 import { MAX_SIZE, parsePuzzle, useAppStore } from '../state/store';
-import { parseClueText } from '../state/clueText';
+import { formatClue, parseClueText } from '../state/clueText';
+import { parsePuzzleJson, puzzleToJson } from '../state/puzzleJson';
 import { validatePuzzle, type ValidationIssue } from '../solver/validate';
 
 function ClueList({
@@ -76,6 +78,10 @@ export default function ClueEditor() {
   const clearClues = useAppStore((s) => s.clearClues);
   const startSolver = useAppStore((s) => s.startSolver);
   const setView = useAppStore((s) => s.setView);
+  const setRowTexts = useAppStore((s) => s.setRowTexts);
+  const setColTexts = useAppStore((s) => s.setColTexts);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const rowParseError = (i: number) => parseClueText(rowTexts[i]) === null;
   const colParseError = (i: number) => parseClueText(colTexts[i]) === null;
@@ -86,6 +92,28 @@ export default function ClueEditor() {
   const issueOnLine = (kind: 'row' | 'col', index: number) =>
     issues.some((issue) => issue.line?.kind === kind && issue.line.index === index);
   const canSolve = puzzle !== null && issues.length === 0;
+
+  const exportJson = () => {
+    if (!puzzle) return;
+    const blob = new Blob([puzzleToJson(puzzle)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nonogram.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importJson = async (file: File) => {
+    const imported = parsePuzzleJson(await file.text());
+    if (!imported) {
+      setImportError(`Nie udało się odczytać ${file.name} — oczekiwany format: {"rowClues": [[...]], "colClues": [[...]]}.`);
+      return;
+    }
+    setImportError(null);
+    setRowTexts(imported.rowClues.map(formatClue));
+    setColTexts(imported.colClues.map(formatClue));
+  };
 
   return (
     <div className="space-y-4">
@@ -111,8 +139,38 @@ export default function ClueEditor() {
           >
             Wyczyść
           </button>
+          <button
+            onClick={exportJson}
+            disabled={!puzzle}
+            className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 disabled:opacity-40"
+          >
+            Eksport JSON
+          </button>
+          <button
+            onClick={() => importInputRef.current?.click()}
+            className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100"
+          >
+            Import JSON
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void importJson(file);
+              e.target.value = '';
+            }}
+          />
         </div>
       </section>
+
+      {importError && (
+        <section className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {importError}
+        </section>
+      )}
 
       <section className="grid gap-6 rounded-lg border border-gray-200 bg-white p-4 md:grid-cols-2">
         <ClueList

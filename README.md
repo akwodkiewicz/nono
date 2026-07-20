@@ -62,8 +62,8 @@ Całość działa **w przeglądarce, bez backendu** — zdjęcia i dane zagadki 
 | UI | **React + Vite** | Popularny, dojrzały ekosystem; Vite daje szybki dev-server i prosty build statyczny. |
 | Styling | **Tailwind CSS** | Szybkie iterowanie nad UI bez utrzymywania osobnych arkuszy stylów. |
 | Stan aplikacji | **Zustand** | Lekki store bez boilerplate'u; wystarczający przy jednym głównym modelu danych. |
-| OCR | **Tesseract.js** (WASM) | OCR w całości w przeglądarce — darmowy, offline, bez wysyłania zdjęć na serwer. Tryb pojedynczego znaku + whitelist `0-9`. |
-| Preprocessing obrazu | **OpenCV.js** (WASM) + Canvas API | Korekcja perspektywy, progowanie adaptacyjne, wykrywanie siatki i segmentacja komórek — warunek dobrej skuteczności Tesseracta na zdjęciach z telefonu. |
+| OCR | **Tesseract.js** (WASM) | OCR w całości w przeglądarce — darmowy, offline, bez wysyłania zdjęć na serwer. Tryb pojedynczego słowa/znaku + whitelist `0-9`; zasoby (worker, WASM, dane językowe) self-hostowane zamiast CDN. |
+| Preprocessing obrazu | **własny pipeline TS** + Canvas API | Skala szarości, binaryzacja Otsu, usuwanie linii siatki i segmentacja projekcjami atramentu — czysty TypeScript, testowalny w Node. OpenCV.js (korekcja perspektywy) można dołożyć później, gdy zdjęcia pod kątem okażą się problemem. |
 | Współbieżność | **Web Workers** | OCR i solver poza wątkiem UI. |
 | Testy | **Vitest** | Naturalny wybór przy Vite; szybkie testy jednostkowe solvera i parserów. |
 | Jakość kodu | **ESLint + Prettier** | Standardowa higiena projektu. |
@@ -82,7 +82,26 @@ src/
 
 ## Etapy rozwoju
 
-1. **Rdzeń solvera** — model danych zagadki, silnik line-solving, propagacja, wykrywanie sprzeczności; komplet testów jednostkowych.
-2. **UI planszy i ręczna edycja** — renderowanie planszy, edytor wskazówek, walidacja; aplikacja w pełni użyteczna jeszcze bez OCR.
-3. **Wczytywanie ze zdjęć** — pipeline preprocessingu i OCR, ekran weryfikacji i korekty odczytu.
-4. **Szlif** — tryb krokowy z historią i uzasadnieniami, tryb automatyczny z animacją, zapis sesji, deploy na GitHub Pages.
+1. ✅ **Rdzeń solvera** — model danych zagadki, silnik line-solving, propagacja, wykrywanie sprzeczności; komplet testów jednostkowych.
+2. ✅ **UI planszy i ręczna edycja** — renderowanie planszy, edytor wskazówek, walidacja; aplikacja w pełni użyteczna jeszcze bez OCR.
+3. ✅ **Wczytywanie ze zdjęć** — pipeline preprocessingu i OCR, ekran weryfikacji i korekty odczytu.
+4. ✅ **Szlif** — tryb krokowy z historią i podglądem, tryb automatyczny z animacją, zapis sesji (localStorage), eksport/import JSON, deploy na GitHub Pages.
+
+## Uruchomienie lokalne
+
+```bash
+npm install
+npm run dev      # serwer deweloperski
+npm test         # testy jednostkowe (Vitest)
+npm run build    # typecheck + build produkcyjny do dist/
+npm run preview  # podgląd builda
+```
+
+## Deploy
+
+Workflow `.github/workflows/deploy.yml` buduje aplikację i publikuje ją na
+GitHub Pages przy każdym pushu do `main` (oraz ręcznie przez *workflow
+dispatch*). Wymaga jednorazowego włączenia w repozytorium:
+**Settings → Pages → Source: GitHub Actions**. Aplikacja jest budowana
+z `base: '/nono/'` (vite.config.ts) — przy zmianie nazwy repo trzeba
+zaktualizować tę ścieżkę.

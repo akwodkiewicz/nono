@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { gridAfterSteps } from '../solver/history';
 import { normalizeClue } from '../solver/line';
 import { EMPTY, FILLED, type LineRef } from '../solver/types';
 import { useAppStore } from '../state/store';
@@ -16,9 +17,10 @@ function displayClue(clue: number[]): number[] {
 
 export default function Board() {
   const puzzle = useAppStore((s) => s.puzzle);
-  const grid = useAppStore((s) => s.grid);
+  const currentGrid = useAppStore((s) => s.grid);
   const steps = useAppStore((s) => s.steps);
-  const contradiction = useAppStore((s) => s.contradiction);
+  const viewStep = useAppStore((s) => s.viewStep);
+  const contradictionNow = useAppStore((s) => s.contradiction);
   const [zoom, setZoom] = useState<number | null>(null);
 
   if (!puzzle) return null;
@@ -28,7 +30,12 @@ export default function Board() {
   const rowClues = puzzle.rowClues.map(displayClue);
   const colClues = puzzle.colClues.map(displayClue);
 
-  const lastStep = steps[steps.length - 1];
+  // Podgląd historii: plansza odtworzona z kroków 0..viewStep; sprzeczność
+  // dotyczy tylko stanu bieżącego, więc w podglądzie jej nie pokazujemy.
+  const viewingPast = viewStep !== null;
+  const grid = viewingPast ? gridAfterSteps(height, width, steps, viewStep) : currentGrid;
+  const contradiction = viewingPast ? undefined : contradictionNow;
+  const lastStep = steps[viewStep ?? steps.length - 1];
   const changed = new Set(lastStep?.deductions.map((d) => `${d.row}:${d.col}`) ?? []);
 
   const autoSize = Math.max(12, Math.min(30, Math.floor(600 / Math.max(width, height))));

@@ -1,32 +1,20 @@
+import { describeStep, lineLabel } from '../state/stepText';
 import { useAppStore } from '../state/store';
-import { FILLED, UNKNOWN, type LineRef, type SolveStep } from '../solver/types';
+import { UNKNOWN } from '../solver/types';
 
-function lineLabel(ref: LineRef): string {
-  return ref.kind === 'row' ? `wierszu ${ref.index + 1}` : `kolumnie ${ref.index + 1}`;
-}
-
-function describeStep(step: SolveStep): string {
-  const label = step.line.kind === 'row' ? 'Wiersz' : 'Kolumna';
-  const filled = step.deductions.filter((d) => d.value === FILLED).length;
-  const empty = step.deductions.length - filled;
-  const parts = [];
-  if (filled > 0) parts.push(`${filled} pełne`);
-  if (empty > 0) parts.push(`${empty} puste`);
-  return `${label} ${step.line.index + 1} [${step.clue.join(' ') || '0'}]: oznaczono ${parts.join(
-    ' i ',
-  )} — te komórki są takie same we wszystkich możliwych ułożeniach bloków.`;
-}
-
-const BUTTON = 'rounded border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40';
+const BUTTON =
+  'rounded border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40';
 
 export default function SolverControls() {
   const status = useAppStore((s) => s.status);
   const steps = useAppStore((s) => s.steps);
   const grid = useAppStore((s) => s.grid);
   const contradiction = useAppStore((s) => s.contradiction);
+  const autoPlay = useAppStore((s) => s.autoPlay);
   const stepOnce = useAppStore((s) => s.stepOnce);
   const runAll = useAppStore((s) => s.runAll);
   const undoStep = useAppStore((s) => s.undoStep);
+  const toggleAuto = useAppStore((s) => s.toggleAuto);
   const startSolver = useAppStore((s) => s.startSolver);
   const setView = useAppStore((s) => s.setView);
 
@@ -63,13 +51,16 @@ export default function SolverControls() {
   return (
     <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={stepOnce} disabled={finished} className={BUTTON}>
+        <button onClick={stepOnce} disabled={finished || autoPlay} className={BUTTON}>
           1 krok
         </button>
-        <button onClick={runAll} disabled={finished} className={BUTTON}>
+        <button onClick={toggleAuto} disabled={finished} className={BUTTON}>
+          {autoPlay ? '⏸ Pauza' : '▶ Auto'}
+        </button>
+        <button onClick={runAll} disabled={finished || autoPlay} className={BUTTON}>
           Do końca
         </button>
-        <button onClick={undoStep} disabled={steps.length === 0} className={BUTTON}>
+        <button onClick={undoStep} disabled={steps.length === 0 || autoPlay} className={BUTTON}>
           Cofnij
         </button>
         <button onClick={startSolver} className={BUTTON}>
