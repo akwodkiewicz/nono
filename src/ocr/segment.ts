@@ -68,7 +68,11 @@ export function findBands(
  * krawędź okładki, kończą się na ostatniej długiej linii u góry). Bez tego
  * do wyników wpadają ołówkowe znaki z samej planszy.
  */
-export function prepareCluePhoto(bin: Bitmap, orientation: Orientation, gray?: Uint8Array): Bitmap {
+export function prepareCluePhoto(
+  bin: Bitmap,
+  orientation: Orientation,
+  gray?: Uint8Array,
+): { bitmap: Bitmap; gray?: Uint8Array } {
   let x0 = 0;
   let y0 = 0;
   let x1 = bin.width;
@@ -107,7 +111,30 @@ export function prepareCluePhoto(bin: Bitmap, orientation: Orientation, gray?: U
       ? cropBitmap({ data: gray, width: bin.width, height: bin.height }, x0, y0, x1 - x0, y1 - y0)
           .data
       : gray;
-  return keepDigitLikeComponents(cropped, { gray: croppedGray });
+  return { bitmap: keepDigitLikeComponents(cropped, { gray: croppedGray }), gray: croppedGray };
+}
+
+/**
+ * Szuka pionowej doliny atramentu w środkowej części tokenu — miejsca
+ * rozcięcia liczby dwucyfrowej na osobne cyfry. Zwraca x doliny albo null,
+ * gdy token nie ma wyraźnej przerwy (pojedyncza cyfra).
+ */
+export function findSplitColumn(token: Bitmap): number | null {
+  if (token.width < 6) return null;
+  const proj = projectCols(token);
+  const max = Math.max(...proj);
+  if (max === 0) return null;
+  let best = -1;
+  let bestInk = Number.POSITIVE_INFINITY;
+  const from = Math.floor(token.width * 0.3);
+  const to = Math.ceil(token.width * 0.7);
+  for (let x = from; x < to; x++) {
+    if (proj[x] < bestInk) {
+      bestInk = proj[x];
+      best = x;
+    }
+  }
+  return bestInk <= max * 0.25 ? best : null;
 }
 
 /**
