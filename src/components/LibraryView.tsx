@@ -103,8 +103,7 @@ export default function LibraryView() {
   return (
     <div className="space-y-4">
       <p className="max-w-[65ch] text-sm text-muted">
-        Twoje zagadki są zapamiętane wraz z postępem rozwiązywania. Stuknij kafelek, żeby wrócić
-        tam, gdzie skończyłeś, albo załóż nową.
+        {puzzles.length > 0 ? 'Wróć do rozwiązywanych zagadek lub dodaj nową' : 'Dodaj nową zagadkę'}
       </p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <button

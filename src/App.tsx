@@ -48,10 +48,14 @@ export default function App() {
     <div className="min-h-screen">
       <header className="border-b border-line">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-2.5 px-4">
-          {meta.back && (
+          {meta.back ? (
             <IconButton className="-ml-2 h-8 w-8" title="Wróć" onClick={() => setView(meta.back!)}>
               <ArrowLeft size={16} />
             </IconButton>
+          ) : (
+            // Reserve the back-arrow footprint so the wordmark keeps a fixed
+            // horizontal position across views instead of jumping.
+            <div className="-ml-2 h-8 w-8" aria-hidden="true" />
           )}
           <Mark />
           <h1 className="text-lg font-semibold leading-none tracking-tight">nono</h1>

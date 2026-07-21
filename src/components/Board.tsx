@@ -267,7 +267,7 @@ export default function Board() {
         <span className="ml-auto">
           {checkMode
             ? 'Tap w komórkę = sprawdzenie pola'
-            : 'Tap: prawa strona – krok dalej, lewa ⅓ – cofnij'}
+            : 'Dotknij planszy z prawej strony aby przejść do kolejnego kroku lub z lewej strony aby się cofnąć'}
         </span>
       </div>
     </div>
