@@ -38,7 +38,8 @@ export interface PuzzleEntry {
   status: UiStatus;
   contradiction?: LineRef;
   createdAt: number;
-  /** „Data ostatniego ruchu" — bijemy przy każdej zmianie danych zagadki. */
+  /** Data dodania lub ostatniej edycji definicji (wskazówek); kroki solvera
+   *  jej nie ruszają. */
   updatedAt: number;
 }
 
@@ -401,9 +402,11 @@ export const useAppStore = create<AppState>()(
 
 // Lustro pól roboczych → aktywny wpis biblioteki. Jedno miejsce synchronizacji:
 // istniejące akcje edytora/solvera zmieniają tylko pola robocze, a tu trafiają
-// z powrotem do puzzles[activeId] wraz z aktualizacją updatedAt. Porównanie po
-// referencji wystarcza — akcje tworzą nowe referencje tylko przy realnej
-// zmianie, więc przełączenie zagadki (te same referencje) nie bije updatedAt.
+// z powrotem do puzzles[activeId]. Porównanie po referencji wystarcza — akcje
+// tworzą nowe referencje tylko przy realnej zmianie, więc przełączenie zagadki
+// (te same referencje) nic nie zapisuje. `updatedAt` bijemy tylko przy zmianie
+// samej definicji (wskazówek) — kroki solvera zapisujemy, ale daty nie ruszają,
+// bo etykieta w galerii pokazuje datę dodania/edycji zagadki, nie ostatni ruch.
 let mirroring = false;
 useAppStore.subscribe((state) => {
   if (mirroring || !state.activeId) return;
@@ -421,10 +424,12 @@ useAppStore.subscribe((state) => {
   ) {
     return;
   }
+  const definitionChanged =
+    entry.rowTexts !== state.rowTexts || entry.colTexts !== state.colTexts;
   const updated: PuzzleEntry = {
     ...entry,
     ...activeFields(state),
-    updatedAt: Date.now(),
+    updatedAt: definitionChanged ? Date.now() : entry.updatedAt,
   };
   mirroring = true;
   useAppStore.setState({

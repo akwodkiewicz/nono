@@ -97,7 +97,7 @@ export default function LibraryView() {
   const puzzles = useAppStore((s) => s.puzzles);
   const newPuzzle = useAppStore((s) => s.newPuzzle);
 
-  // Najświeższy ruch na górze — galeria „aktualnie rozwiązywanych".
+  // Najnowsze (dodane / edytowane) na górze.
   const ordered = [...puzzles].sort((a, b) => b.updatedAt - a.updatedAt);
 
   return (

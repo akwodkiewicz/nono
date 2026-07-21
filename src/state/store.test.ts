@@ -75,6 +75,20 @@ describe('biblioteka zagadek', () => {
     expect(store.getState().puzzle).toBeDefined();
   });
 
+  it('updatedAt to data edycji definicji, nie ruszają jej kroki solvera', () => {
+    const store = useAppStore;
+    store.getState().newPuzzle();
+    const id = store.getState().activeId!;
+    store.getState().setRowTexts(['1']);
+    store.getState().setColTexts(['1']);
+    const afterDefine = store.getState().puzzles.find((p) => p.id === id)!.updatedAt;
+
+    store.getState().startSolver();
+    store.getState().stepOnce();
+    const afterSolve = store.getState().puzzles.find((p) => p.id === id)!.updatedAt;
+    expect(afterSolve).toBe(afterDefine);
+  });
+
   it('usunięcie aktywnej zagadki wraca do biblioteki', () => {
     const store = useAppStore;
     store.getState().newPuzzle();

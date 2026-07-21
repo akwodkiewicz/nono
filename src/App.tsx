@@ -1,5 +1,6 @@
 import { ArrowLeft } from '@phosphor-icons/react';
 import ClueEditor from './components/ClueEditor';
+import HeaderMenu from './components/HeaderMenu';
 import LibraryView from './components/LibraryView';
 import PhotoImport from './components/PhotoImport';
 import SolverView from './components/SolverView';
@@ -7,12 +8,14 @@ import { IconButton } from './components/ui';
 import { useAppStore, type View } from './state/store';
 
 /** Header title and back target per view. The future 'assistant' view
- *  (docs/tryb-pomocnika.md) adds one entry here. */
+ *  (docs/tryb-pomocnika.md) adds one entry here. Solver "back" returns to the
+ *  gallery — editing the definition is a deliberate action in the header menu,
+ *  since once solving starts nobody expects "back" to reopen the editor. */
 const VIEW_META: Record<View, { title: string; back?: View }> = {
   library: { title: 'Zagadki' },
   editor: { title: 'Edytor', back: 'library' },
   import: { title: 'Import ze zdjęć', back: 'editor' },
-  solver: { title: 'Rozwiązywanie', back: 'editor' },
+  solver: { title: 'Rozwiązywanie', back: 'library' },
 };
 
 /** Wordmark glyph: a 2x2 mini-nonogram (two solved cells, one fresh deduction,
@@ -54,6 +57,7 @@ export default function App() {
           <h1 className="text-lg font-semibold leading-none tracking-tight">nono</h1>
           <span aria-hidden="true" className="h-4 w-px bg-line" />
           <span className="truncate text-sm leading-none text-muted">{meta.title}</span>
+          {view === 'solver' && <HeaderMenu />}
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
