@@ -4,7 +4,7 @@ import { MAX_SIZE, parsePuzzle, useAppStore } from '../state/store';
 import { formatClue, parseClueText } from '../state/clueText';
 import { parsePuzzleJson, puzzleToJson } from '../state/puzzleJson';
 import { validatePuzzle, type ValidationIssue } from '../solver/validate';
-import { ActionBar, Button, IconButton, Menu, Panel } from './ui';
+import { ActionBar, Button, IconButton, Panel } from './ui';
 
 function ClueList({
   label,
@@ -144,57 +144,68 @@ export default function ClueEditor() {
 
   return (
     <div className="space-y-4">
-      <section className="flex flex-wrap items-center gap-x-5 gap-y-3">
-        <CountInput label="Wiersze:" value={rowTexts.length} onChange={setRowCount} />
-        <CountInput label="Kolumny:" value={colTexts.length} onChange={setColCount} />
-        <div className="ml-auto flex items-center gap-1.5">
-          <Menu
-            label="Więcej działań"
-            items={[
-              { label: 'Wczytaj przykład', onSelect: loadExample },
-              { label: 'Import JSON', onSelect: () => importInputRef.current?.click() },
-              { label: 'Eksport JSON', onSelect: exportJson, disabled: !puzzle },
-              { label: 'Wyczyść', onSelect: clearClues },
-            ]}
-          />
-          <Button variant="secondary" size="sm" onClick={() => setView('import')}>
-            <Camera size={15} /> Wczytaj ze zdjęć
-          </Button>
-          <input
-            ref={importInputRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void importJson(file);
-              e.target.value = '';
-            }}
-          />
-        </div>
+      {/* Data actions, all visible and left-aligned: bring data in (photo is
+          the emphasized path, then example and JSON) on the left, then a
+          hairline before the get-out / reset group. */}
+      <section className="flex flex-wrap items-center gap-2">
+        <Button variant="secondary" size="sm" onClick={() => setView('import')}>
+          <Camera size={15} /> Wczytaj ze zdjęć
+        </Button>
+        <Button variant="quiet" size="sm" onClick={loadExample}>
+          Wczytaj przykład
+        </Button>
+        <Button variant="quiet" size="sm" onClick={() => importInputRef.current?.click()}>
+          Import JSON
+        </Button>
+        <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-line sm:block" />
+        <Button variant="quiet" size="sm" onClick={exportJson} disabled={!puzzle}>
+          Eksport JSON
+        </Button>
+        <Button variant="quiet" size="sm" onClick={clearClues}>
+          Wyczyść
+        </Button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void importJson(file);
+            e.target.value = '';
+          }}
+        />
       </section>
 
       {importError && (
         <p className="border-l-2 border-danger py-1 pl-3 text-sm text-danger">{importError}</p>
       )}
 
-      <Panel className="grid gap-6 p-4 sm:p-5 md:grid-cols-2">
-        <ClueList
-          label="Wiersze"
-          hint="Od góry do dołu; liczby rozdzielaj spacją, kropką lub przecinkiem. Pusta linia = pusty wiersz."
-          texts={rowTexts}
-          invalid={(i) => rowParseError(i) || issueOnLine('row', i)}
-          onChange={setRowText}
-          onReplace={setRowTexts}
-        />
-        <ClueList
-          label="Kolumny"
-          hint="Od lewej do prawej; liczby to bloki od góry."
-          texts={colTexts}
-          invalid={(i) => colParseError(i) || issueOnLine('col', i)}
-          onChange={setColText}
-          onReplace={setColTexts}
-        />
+      <Panel className="p-4 sm:p-5">
+        {/* Board size sits with the clue lists it controls, not at the very
+            top of the view. */}
+        <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line pb-4">
+          <CountInput label="Wiersze:" value={rowTexts.length} onChange={setRowCount} />
+          <CountInput label="Kolumny:" value={colTexts.length} onChange={setColCount} />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <ClueList
+            label="Wiersze"
+            hint="Od góry do dołu; liczby rozdzielaj spacją, kropką lub przecinkiem. Pusta linia = pusty wiersz."
+            texts={rowTexts}
+            invalid={(i) => rowParseError(i) || issueOnLine('row', i)}
+            onChange={setRowText}
+            onReplace={setRowTexts}
+          />
+          <ClueList
+            label="Kolumny"
+            hint="Od lewej do prawej; liczby to bloki od góry."
+            texts={colTexts}
+            invalid={(i) => colParseError(i) || issueOnLine('col', i)}
+            onChange={setColText}
+            onReplace={setColTexts}
+          />
+        </div>
       </Panel>
 
       {(hasParseErrors || issues.length > 0) && (
