@@ -5,11 +5,13 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import { Check, Question, X } from '@phosphor-icons/react';
 import { gridAfterSteps } from '../solver/history';
 import { normalizeClue } from '../solver/line';
 import { EMPTY, FILLED, type LineRef } from '../solver/types';
 import { useAppStore } from '../state/store';
 import CellX from './CellX';
+import { Button } from './ui';
 
 function onLine(line: LineRef | undefined, row: number, col: number): boolean {
   if (!line) return false;
@@ -68,8 +70,11 @@ export default function Board() {
   const viewingPast = viewStep !== null;
   const grid = viewingPast ? gridAfterSteps(height, width, steps, viewStep) : currentGrid;
   const contradiction = viewingPast ? undefined : contradictionNow;
-  const lastStep = steps[viewStep ?? steps.length - 1];
+  const stepIndex = viewStep ?? steps.length - 1;
+  const lastStep = steps[stepIndex];
   const changed = new Set(lastStep?.deductions.map((d) => `${d.row}:${d.col}`) ?? []);
+  // Remount key for freshly-changed cells so cell-pop replays each step.
+  const popKey = viewStep ?? steps.length;
 
   const rcMax = Math.max(1, ...rowClues.map((c) => c.length));
   const ccMax = Math.max(1, ...colClues.map((c) => c.length));
@@ -117,25 +122,20 @@ export default function Board() {
 
   // Column clues (aligned to the bottom of the clue area).
   colClues.forEach((clue, c) => {
+    const active = !contradiction && lastStep?.line.kind === 'col' && lastStep.line.index === c;
+    const conflict = contradiction?.kind === 'col' && contradiction.index === c;
+    const highlight = conflict
+      ? 'bg-danger-wash text-danger'
+      : active
+        ? 'bg-accent-wash text-accent-text font-bold'
+        : '';
     clue.forEach((block, j) => {
-      const highlight = contradiction
-        ? onLine(contradiction, -1, c) && contradiction.kind === 'col'
-          ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-          : ''
-        : lastStep && lastStep.line.kind === 'col' && lastStep.line.index === c
-          ? 'bg-amber-100 dark:bg-amber-900'
-          : '';
       cells.push(
         <div
           key={`cc-${c}-${j}`}
-          style={{
-            gridColumn: rcMax + c + 1,
-            gridRow: ccMax - clue.length + j + 1,
-          }}
-          className={`flex items-end justify-center pb-0.5 font-medium text-gray-700 dark:text-gray-300 ${
-            (c + 1) % 5 === 0 && c < width - 1
-              ? 'border-r border-gray-300 dark:border-gray-600'
-              : ''
+          style={{ gridColumn: rcMax + c + 1, gridRow: ccMax - clue.length + j + 1 }}
+          className={`flex items-end justify-center pb-0.5 font-mono text-ink ${
+            (c + 1) % 5 === 0 && c < width - 1 ? 'border-r border-grid' : ''
           } ${highlight}`}
         >
           {block}
@@ -146,25 +146,20 @@ export default function Board() {
 
   // Row clues (aligned to the right).
   rowClues.forEach((clue, r) => {
+    const active = !contradiction && lastStep?.line.kind === 'row' && lastStep.line.index === r;
+    const conflict = contradiction?.kind === 'row' && contradiction.index === r;
+    const highlight = conflict
+      ? 'bg-danger-wash text-danger'
+      : active
+        ? 'bg-accent-wash text-accent-text font-bold'
+        : '';
     clue.forEach((block, j) => {
-      const highlight = contradiction
-        ? onLine(contradiction, r, -1) && contradiction.kind === 'row'
-          ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-          : ''
-        : lastStep && lastStep.line.kind === 'row' && lastStep.line.index === r
-          ? 'bg-amber-100 dark:bg-amber-900'
-          : '';
       cells.push(
         <div
           key={`rc-${r}-${j}`}
-          style={{
-            gridColumn: rcMax - clue.length + j + 1,
-            gridRow: ccMax + r + 1,
-          }}
-          className={`flex items-center justify-end pr-1 font-medium text-gray-700 dark:text-gray-300 ${
-            (r + 1) % 5 === 0 && r < height - 1
-              ? 'border-b border-gray-300 dark:border-gray-600'
-              : ''
+          style={{ gridColumn: rcMax - clue.length + j + 1, gridRow: ccMax + r + 1 }}
+          className={`flex items-center justify-end pr-1 font-mono text-ink ${
+            (r + 1) % 5 === 0 && r < height - 1 ? 'border-b border-grid' : ''
           } ${highlight}`}
         >
           {block}
@@ -183,57 +178,50 @@ export default function Board() {
 
       const borders = [
         'border-r border-b',
-        (c + 1) % 5 === 0 || c === width - 1
-          ? 'border-r-gray-800 dark:border-r-gray-400'
-          : 'border-r-gray-300 dark:border-r-gray-700',
-        (r + 1) % 5 === 0 || r === height - 1
-          ? 'border-b-gray-800 dark:border-b-gray-400'
-          : 'border-b-gray-300 dark:border-b-gray-700',
-        c === 0 ? 'border-l border-l-gray-800 dark:border-l-gray-400' : '',
-        r === 0 ? 'border-t border-t-gray-800 dark:border-t-gray-400' : '',
+        (c + 1) % 5 === 0 || c === width - 1 ? 'border-r-grid-strong' : 'border-r-grid',
+        (r + 1) % 5 === 0 || r === height - 1 ? 'border-b-grid-strong' : 'border-b-grid',
+        c === 0 ? 'border-l border-l-grid-strong' : '',
+        r === 0 ? 'border-t border-t-grid-strong' : '',
       ].join(' ');
 
       let content: ReactNode = null;
-      let background = 'bg-white dark:bg-gray-900';
+      let background = 'bg-surface';
+      let extra = '';
       if (value === FILLED) {
-        background = isChanged ? 'bg-amber-500' : 'bg-gray-900 dark:bg-gray-200';
+        background = isChanged ? 'bg-accent' : 'bg-ink';
+        if (isChanged) extra = 'cell-pop';
       } else if (value === EMPTY) {
-        content = (
-          <CellX
-            className={
-              isChanged ? 'text-amber-600 dark:text-amber-400' : 'text-gray-300 dark:text-gray-600'
-            }
-          />
-        );
-        background = isChanged ? 'bg-amber-50 dark:bg-amber-950' : 'bg-white dark:bg-gray-900';
+        content = <CellX className={isChanged ? 'text-accent-text' : 'text-grid'} />;
+        background = isChanged ? 'bg-accent-wash' : 'bg-surface';
+        if (isChanged) extra = 'cell-pop';
       }
       if (value !== FILLED) {
-        if (isOnConflictLine) background = 'bg-red-50 dark:bg-red-950';
-        else if (isOnActiveLine && !isChanged) background = 'bg-amber-50 dark:bg-amber-950';
+        if (isOnConflictLine) background = 'bg-danger-wash';
+        else if (isOnActiveLine && !isChanged) background = 'bg-accent-wash';
       }
 
       // The checked-cell marker overrides the cell's look — the only place
       // where a fragment of the full solution is revealed.
       if (checkMode && checkResult && checkResult.row === r && checkResult.col === c) {
         if (checkResult.state === 'filled') {
-          background = 'bg-emerald-500';
-          content = <span className="font-bold text-white">✓</span>;
+          background = 'bg-success';
+          content = <Check size="70%" weight="bold" className="text-paper" />;
         } else if (checkResult.state === 'empty') {
-          background = 'bg-sky-100 dark:bg-sky-900';
-          content = <span className="font-bold text-sky-700 dark:text-sky-300">✕</span>;
+          background = 'bg-surface ring-2 ring-inset ring-ink';
+          content = <X size="70%" weight="bold" className="text-ink" />;
         } else {
-          background = 'bg-gray-200 dark:bg-gray-700';
-          content = <span className="font-bold text-gray-600 dark:text-gray-300">?</span>;
+          background = 'bg-line';
+          content = <Question size="70%" weight="bold" className="text-muted" />;
         }
       }
 
       cells.push(
         <div
-          key={`c-${r}-${c}`}
+          key={isChanged ? `c-${r}-${c}-${popKey}` : `c-${r}-${c}`}
           data-row={r}
           data-col={c}
           style={{ gridColumn: rcMax + c + 1, gridRow: ccMax + r + 1 }}
-          className={`flex items-center justify-center ${borders} ${background}`}
+          className={`flex items-center justify-center ${borders} ${background} ${extra}`}
         >
           {content}
         </div>,
@@ -243,7 +231,7 @@ export default function Board() {
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted">
         <span>Zoom</span>
         <input
           type="range"
@@ -251,19 +239,17 @@ export default function Board() {
           max={40}
           value={size}
           onChange={(e) => setZoom(Number.parseInt(e.target.value, 10))}
+          aria-label="Powiększenie planszy"
         />
         {zoom !== null && (
-          <button
-            onClick={() => setZoom(null)}
-            className="rounded border border-gray-300 bg-white px-2 py-0.5 text-xs hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-900 dark:hover:bg-gray-800"
-          >
+          <Button variant="quiet" size="sm" onClick={() => setZoom(null)}>
             dopasuj
-          </button>
+          </Button>
         )}
-        <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">
+        <span className="ml-auto text-xs text-muted">
           {checkMode
             ? 'Tap w komórkę = sprawdzenie pola'
-            : 'Tap: prawa strona — krok dalej, lewa ⅓ — cofnij'}
+            : 'Tap: prawa strona – krok dalej, lewa ⅓ – cofnij'}
         </span>
       </div>
       <div
@@ -271,7 +257,7 @@ export default function Board() {
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={() => (tapStart.current = null)}
-        className="touch-manipulation select-none overflow-auto rounded-lg border border-gray-200 bg-white p-2 sm:p-4 dark:border-gray-800 dark:bg-gray-900"
+        className="touch-manipulation select-none overflow-auto rounded-xl border border-line bg-surface p-2 shadow-board sm:p-4"
       >
         <div
           className="inline-grid"

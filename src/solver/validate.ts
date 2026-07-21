@@ -62,7 +62,7 @@ export function validatePuzzle(puzzle: Puzzle): ValidationIssue[] {
   const colSum = sumClues(puzzle.colClues);
   if (rowSum !== colSum) {
     issues.push({
-      message: `Suma wskazówek wierszy (${rowSum}) różni się od sumy kolumn (${colSum}) — gdzieś jest błąd w danych.`,
+      message: `Suma wskazówek wierszy (${rowSum}) różni się od sumy kolumn (${colSum}) – gdzieś jest błąd w danych.`,
     });
   }
 

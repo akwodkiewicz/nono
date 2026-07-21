@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { describeStepShort } from '../state/stepText';
 import { useAppStore } from '../state/store';
+import { Button, Panel } from './ui';
 
 /**
  * List of executed steps; clicking shows the board state after a given step
@@ -34,28 +35,23 @@ export default function HistoryPanel() {
 
   if (steps.length === 0) {
     return (
-      <aside className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-        Historia kroków pojawi się tutaj.
-      </aside>
+      <Panel className="p-4 text-sm text-muted">Historia kroków pojawi się tutaj.</Panel>
     );
   }
 
   return (
-    <aside className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <Panel className="p-4">
       <div className="mb-2 flex items-baseline justify-between">
         <h3 className="font-semibold">Historia</h3>
         {viewStep !== null && (
-          <button
-            onClick={() => setViewStep(null)}
-            className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
-          >
+          <Button variant="quiet" size="sm" onClick={() => setViewStep(null)}>
             wróć do bieżącego
-          </button>
+          </Button>
         )}
       </div>
       {viewStep !== null && (
-        <p className="mb-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-          Podgląd kroku {viewStep + 1} z {steps.length} — plansza pokazuje stan historyczny.
+        <p className="mb-2 border-l-2 border-accent py-1 pl-3 text-xs text-accent-text">
+          Podgląd kroku {viewStep + 1} z {steps.length} – plansza pokazuje stan historyczny.
         </p>
       )}
       <ol ref={listRef} className="max-h-80 space-y-0.5 overflow-y-auto text-sm">
@@ -64,10 +60,10 @@ export default function HistoryPanel() {
             <button
               data-active={i === current}
               onClick={() => setViewStep(i)}
-              className={`w-full rounded px-2 py-0.5 text-left font-mono text-xs ${
+              className={`w-full rounded-lg px-2 py-1 text-left font-mono text-xs transition-colors ${
                 i === current
-                  ? 'bg-blue-100 font-semibold text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                  ? 'bg-accent-wash font-semibold text-accent-text'
+                  : 'text-muted hover:bg-ink/5 hover:text-ink'
               }`}
             >
               {i + 1}. {describeStepShort(step)}
@@ -75,6 +71,6 @@ export default function HistoryPanel() {
           </li>
         ))}
       </ol>
-    </aside>
+    </Panel>
   );
 }
