@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Camera, Plus, X } from '@phosphor-icons/react';
+import { Camera, FileArrowUp, Plus, X } from '@phosphor-icons/react';
 import { MAX_SIZE, parsePuzzle, useAppStore } from '../state/store';
 import { formatClue, parseClueText } from '../state/clueText';
 import { parsePuzzleJson, puzzleToJson } from '../state/puzzleJson';
@@ -98,7 +98,6 @@ export default function ClueEditor() {
   const setColText = useAppStore((s) => s.setColText);
   const setRowCount = useAppStore((s) => s.setRowCount);
   const setColCount = useAppStore((s) => s.setColCount);
-  const loadExample = useAppStore((s) => s.loadExample);
   const clearClues = useAppStore((s) => s.clearClues);
   const startSolver = useAppStore((s) => s.startSolver);
   const setView = useAppStore((s) => s.setView);
@@ -124,7 +123,9 @@ export default function ClueEditor() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'nonogram.json';
+    // Nazwa z rozmiaru planszy (bez daty — byłaby myląca); duplikaty system
+    // plików ponumeruje sam: 10x10-nonogram (1).json itd.
+    a.download = `${puzzle.colClues.length}x${puzzle.rowClues.length}-nonogram.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -144,18 +145,15 @@ export default function ClueEditor() {
 
   return (
     <div className="space-y-4">
-      {/* Data actions, all visible and left-aligned: bring data in (photo is
-          the emphasized path, then example and JSON) on the left, then a
-          hairline before the get-out / reset group. */}
+      {/* Data actions, all visible and left-aligned: two equal import paths
+          (photo or JSON) on the left, then a hairline before the get-out /
+          reset group. */}
       <section className="flex flex-wrap items-center gap-2">
         <Button variant="secondary" size="sm" onClick={() => setView('import')}>
           <Camera size={15} /> Wczytaj ze zdjęć
         </Button>
-        <Button variant="quiet" size="sm" onClick={loadExample}>
-          Wczytaj przykład
-        </Button>
-        <Button variant="quiet" size="sm" onClick={() => importInputRef.current?.click()}>
-          Import JSON
+        <Button variant="secondary" size="sm" onClick={() => importInputRef.current?.click()}>
+          <FileArrowUp size={15} /> Import JSON
         </Button>
         <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-line sm:block" />
         <Button variant="quiet" size="sm" onClick={exportJson} disabled={!puzzle}>

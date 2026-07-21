@@ -1,10 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { cluesFromGrid, gridFromStrings } from '../solver/clues';
 import { Solver, restoreSolver, type SolverStatus, type StepResult } from '../solver/solver';
 import { EMPTY, FILLED, type Grid, type LineRef, type Puzzle, type SolveStep } from '../solver/types';
 import { validatePuzzle } from '../solver/validate';
-import { formatClue, parseClueText } from './clueText';
+import { parseClueText } from './clueText';
 
 export type View = 'library' | 'editor' | 'import' | 'solver';
 export type UiStatus = 'ready' | SolverStatus;
@@ -43,21 +42,6 @@ export interface PuzzleEntry {
   updatedAt: number;
 }
 
-const EXAMPLE = cluesFromGrid(
-  gridFromStrings([
-    '....##....',
-    '...####...',
-    '..######..',
-    '.########.',
-    '##########',
-    '####..####',
-    '###....###',
-    '###....###',
-    '####..####',
-    '##########',
-  ]),
-);
-
 interface AppState {
   view: View;
   /** Biblioteka wszystkich zagadek. */
@@ -95,7 +79,6 @@ interface AppState {
   setColTexts: (texts: string[]) => void;
   setRowCount: (count: number) => void;
   setColCount: (count: number) => void;
-  loadExample: () => void;
   clearClues: () => void;
   startSolver: () => void;
   stepOnce: () => void;
@@ -124,10 +107,6 @@ export function parsePuzzle(rowTexts: string[], colTexts: string[]): Puzzle | nu
 
 function blankTexts(count: number): string[] {
   return Array<string>(count).fill('');
-}
-
-function exampleEntry(): PuzzleEntry {
-  return newEntry(EXAMPLE.rowClues.map(formatClue), EXAMPLE.colClues.map(formatClue));
 }
 
 function newEntry(rowTexts: string[], colTexts: string[]): PuzzleEntry {
@@ -249,15 +228,19 @@ function resize(texts: string[], count: number): string[] {
     : [...texts, ...Array<string>(n - texts.length).fill('')];
 }
 
-const seed = exampleEntry();
-
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       view: 'library',
-      puzzles: [seed],
-      activeId: seed.id,
-      ...activeFields(seed),
+      puzzles: [],
+      activeId: null,
+      rowTexts: [''],
+      colTexts: [''],
+      puzzle: undefined,
+      grid: [],
+      steps: [],
+      status: 'ready',
+      contradiction: undefined,
       viewStep: null,
       checkMode: false,
       checkResult: null,
@@ -327,11 +310,6 @@ export const useAppStore = create<AppState>()(
       setColTexts: (texts) => set({ colTexts: texts.length > 0 ? texts : [''] }),
       setRowCount: (count) => set((s) => ({ rowTexts: resize(s.rowTexts, count) })),
       setColCount: (count) => set((s) => ({ colTexts: resize(s.colTexts, count) })),
-      loadExample: () =>
-        set({
-          rowTexts: EXAMPLE.rowClues.map(formatClue),
-          colTexts: EXAMPLE.colClues.map(formatClue),
-        }),
       clearClues: () =>
         set((s) => ({
           rowTexts: s.rowTexts.map(() => ''),

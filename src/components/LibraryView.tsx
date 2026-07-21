@@ -68,7 +68,7 @@ function PuzzleCard({ entry }: { entry: PuzzleEntry }) {
           if (window.confirm('Usunąć tę zagadkę z biblioteki?')) deletePuzzle(entry.id);
         }}
         title="Usuń zagadkę"
-        className="absolute right-1.5 top-1.5 z-10 bg-paper/80 opacity-0 backdrop-blur-sm transition-opacity hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
+        className="absolute right-1.5 top-1.5 z-10 border border-line bg-paper/90 shadow-sm backdrop-blur-sm transition-colors hover:text-danger"
       >
         <Trash size={14} weight="bold" />
       </IconButton>
