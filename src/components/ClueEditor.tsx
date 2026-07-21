@@ -4,7 +4,7 @@ import { MAX_SIZE, parsePuzzle, useAppStore } from '../state/store';
 import { formatClue, parseClueText } from '../state/clueText';
 import { parsePuzzleJson, puzzleToJson } from '../state/puzzleJson';
 import { validatePuzzle, type ValidationIssue } from '../solver/validate';
-import { Button, IconButton, Panel } from './ui';
+import { ActionBar, Button, IconButton, Menu, Panel } from './ui';
 
 function ClueList({
   label,
@@ -147,21 +147,18 @@ export default function ClueEditor() {
       <section className="flex flex-wrap items-center gap-x-5 gap-y-3">
         <CountInput label="Wiersze:" value={rowTexts.length} onChange={setRowCount} />
         <CountInput label="Kolumny:" value={colTexts.length} onChange={setColCount} />
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+        <div className="ml-auto flex items-center gap-1.5">
+          <Menu
+            label="Więcej działań"
+            items={[
+              { label: 'Wczytaj przykład', onSelect: loadExample },
+              { label: 'Import JSON', onSelect: () => importInputRef.current?.click() },
+              { label: 'Eksport JSON', onSelect: exportJson, disabled: !puzzle },
+              { label: 'Wyczyść', onSelect: clearClues },
+            ]}
+          />
           <Button variant="secondary" size="sm" onClick={() => setView('import')}>
             <Camera size={15} /> Wczytaj ze zdjęć
-          </Button>
-          <Button variant="quiet" size="sm" onClick={loadExample}>
-            Wczytaj przykład
-          </Button>
-          <Button variant="quiet" size="sm" onClick={clearClues}>
-            Wyczyść
-          </Button>
-          <Button variant="quiet" size="sm" onClick={exportJson} disabled={!puzzle}>
-            Eksport JSON
-          </Button>
-          <Button variant="quiet" size="sm" onClick={() => importInputRef.current?.click()}>
-            Import JSON
           </Button>
           <input
             ref={importInputRef}
@@ -211,15 +208,17 @@ export default function ClueEditor() {
         </div>
       )}
 
-      <Button
-        variant="primary"
-        size="lg"
-        onClick={startSolver}
-        disabled={!canSolve}
-        className="w-full sm:w-auto"
-      >
-        Rozwiązuj
-      </Button>
+      <ActionBar>
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={startSolver}
+          disabled={!canSolve}
+          className="w-full sm:w-auto"
+        >
+          Rozwiązuj
+        </Button>
+      </ActionBar>
     </div>
   );
 }

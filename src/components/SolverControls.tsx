@@ -41,33 +41,36 @@ export default function SolverControls() {
   const total = grid.length * (grid[0]?.length ?? 0);
   const known = grid.flat().filter((c) => c !== UNKNOWN).length;
 
-  // A message only for states that need the user's attention; regular
-  // progress is visible on the board and the step counter. Each status gets a
-  // colored left hairline instead of a filled box.
-  let statusText: string | null = null;
-  let statusClass = '';
+  // A terminal-state chip in the bar plus a longer detail line below it. The
+  // 'solved' state needs no detail line (the chip and step counter say it all);
+  // 'stuck' and 'contradiction' keep their sentence, and the contradiction line
+  // reference is diagnostically important.
+  let chip: { label: string; cls: string } | null = null;
+  let detailText: string | null = null;
+  let detailClass = '';
   switch (status) {
     case 'solved':
-      statusText = `Rozwiązane w ${steps.length} krokach.`;
-      statusClass = 'border-success text-success';
+      chip = { label: 'Rozwiązane', cls: 'border-success text-success' };
       break;
     case 'stuck':
-      statusText = `Solver utknął (${known}/${total} komórek): dalszy postęp wymagałby zgadywania, a solver używa wyłącznie pewnych wniosków.`;
-      statusClass = 'border-accent text-accent-text';
+      chip = { label: 'Utknął', cls: 'border-accent text-accent-text' };
+      detailText = `Solver utknął (${known}/${total} komórek): dalszy postęp wymagałby zgadywania, a solver używa wyłącznie pewnych wniosków.`;
+      detailClass = 'border-accent text-accent-text';
       break;
     case 'contradiction':
-      statusText = `Sprzeczność w ${contradiction ? lineLabel(contradiction) : 'danych'} – sprawdź wskazówki (częsta przyczyna: błąd odczytu ze zdjęcia).`;
-      statusClass = 'border-danger text-danger';
+      chip = { label: 'Sprzeczność', cls: 'border-danger text-danger' };
+      detailText = `Sprzeczność w ${contradiction ? lineLabel(contradiction) : 'danych'} – sprawdź wskazówki (częsta przyczyna: błąd odczytu ze zdjęcia).`;
+      detailClass = 'border-danger text-danger';
       break;
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={toggleCheckMode}
           aria-pressed={checkMode}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-4 py-1.5 text-sm font-medium transition-colors duration-150 motion-safe:active:scale-[0.98] ${
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors duration-150 motion-safe:active:scale-[0.98] ${
             checkMode
               ? 'border-accent bg-accent-wash text-accent-text'
               : 'border-line bg-surface text-ink hover:bg-ink/5'
@@ -75,15 +78,20 @@ export default function SolverControls() {
         >
           <MagnifyingGlass size={15} /> Sprawdź pole
         </button>
-        <span className="font-mono text-sm text-muted">
+        {chip && (
+          <span className={`rounded-lg border px-2 py-0.5 text-xs font-medium ${chip.cls}`}>
+            {chip.label}
+          </span>
+        )}
+        <span className="ml-auto font-mono text-sm text-muted">
           Krok {steps.length}
           <span className="ml-3 text-xs">
             {known}/{total} pól
           </span>
         </span>
       </div>
-      {statusText && (
-        <p className={`border-l-2 py-1 pl-3 text-sm font-medium ${statusClass}`}>{statusText}</p>
+      {detailText && (
+        <p className={`border-l-2 py-1 pl-3 text-sm font-medium ${detailClass}`}>{detailText}</p>
       )}
       {checkMode &&
         (() => {

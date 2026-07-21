@@ -1,7 +1,17 @@
+import { ArrowLeft } from '@phosphor-icons/react';
 import ClueEditor from './components/ClueEditor';
 import PhotoImport from './components/PhotoImport';
 import SolverView from './components/SolverView';
-import { useAppStore } from './state/store';
+import { IconButton } from './components/ui';
+import { useAppStore, type View } from './state/store';
+
+/** Header title and back target per view. The future 'assistant' view
+ *  (docs/tryb-pomocnika.md) adds one entry here. */
+const VIEW_META: Record<View, { title: string; back?: View }> = {
+  editor: { title: 'Edytor' },
+  import: { title: 'Import ze zdjęć', back: 'editor' },
+  solver: { title: 'Rozwiązywanie', back: 'editor' },
+};
 
 /** Wordmark glyph: a 2x2 mini-nonogram (two solved cells, one fresh deduction,
  *  one still empty) echoing the favicon. */
@@ -26,17 +36,29 @@ function Mark() {
 
 export default function App() {
   const view = useAppStore((s) => s.view);
+  const setView = useAppStore((s) => s.setView);
+  const meta = VIEW_META[view];
 
   return (
     <div className="min-h-screen">
       <header className="border-b border-line">
-        <div className="mx-auto flex max-w-5xl items-center gap-2.5 px-4 py-3.5">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-2.5 px-4">
+          {meta.back && (
+            <IconButton
+              className="-ml-2 h-8 w-8"
+              title="Wróć do edytora"
+              onClick={() => setView(meta.back!)}
+            >
+              <ArrowLeft size={16} />
+            </IconButton>
+          )}
           <Mark />
           <h1 className="text-lg font-semibold leading-none tracking-tight">nono</h1>
-          <span className="text-sm leading-none text-muted">solver nonogramów</span>
+          <span aria-hidden="true" className="h-4 w-px bg-line" />
+          <span className="truncate text-sm leading-none text-muted">{meta.title}</span>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
+      <main className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
         {view === 'editor' && <ClueEditor />}
         {view === 'import' && <PhotoImport />}
         {view === 'solver' && <SolverView />}

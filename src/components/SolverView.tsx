@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
-import { ArrowLeft } from '@phosphor-icons/react';
 import { useAppStore } from '../state/store';
 import Board from './Board';
 import HistoryPanel from './HistoryPanel';
 import SolverControls from './SolverControls';
 import StepExplanation from './StepExplanation';
-import { Button } from './ui';
 
 export default function SolverView() {
   // Keyboard shortcuts: Space/→ = next step, ← = undo. Events from inputs and
@@ -28,20 +26,15 @@ export default function SolverView() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const setView = useAppStore((s) => s.setView);
-
   return (
     <div className="space-y-3">
-      <Button variant="quiet" size="sm" onClick={() => setView('editor')} className="-ml-1">
-        <ArrowLeft size={15} /> Edytor wskazówek
-      </Button>
       <SolverControls />
-      <StepExplanation />
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="min-w-0 flex-1">
           <Board />
         </div>
-        <div className="w-full shrink-0 lg:w-64">
+        <div className="w-full shrink-0 space-y-3 lg:w-64 xl:w-72">
+          <StepExplanation />
           <HistoryPanel />
         </div>
       </div>

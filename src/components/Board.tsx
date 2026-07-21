@@ -231,27 +231,6 @@ export default function Board() {
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-        <span>Zoom</span>
-        <input
-          type="range"
-          min={6}
-          max={40}
-          value={size}
-          onChange={(e) => setZoom(Number.parseInt(e.target.value, 10))}
-          aria-label="Powiększenie planszy"
-        />
-        {zoom !== null && (
-          <Button variant="quiet" size="sm" onClick={() => setZoom(null)}>
-            dopasuj
-          </Button>
-        )}
-        <span className="ml-auto text-xs text-muted">
-          {checkMode
-            ? 'Tap w komórkę = sprawdzenie pola'
-            : 'Tap: prawa strona – krok dalej, lewa ⅓ – cofnij'}
-        </span>
-      </div>
       <div
         ref={wrapRef}
         onPointerDown={onPointerDown}
@@ -269,6 +248,27 @@ export default function Board() {
         >
           {cells}
         </div>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+        <span>Zoom</span>
+        <input
+          type="range"
+          min={6}
+          max={40}
+          value={size}
+          onChange={(e) => setZoom(Number.parseInt(e.target.value, 10))}
+          aria-label="Powiększenie planszy"
+        />
+        {zoom !== null && (
+          <Button variant="quiet" size="sm" onClick={() => setZoom(null)}>
+            dopasuj
+          </Button>
+        )}
+        <span className="ml-auto">
+          {checkMode
+            ? 'Tap w komórkę = sprawdzenie pola'
+            : 'Tap: prawa strona – krok dalej, lewa ⅓ – cofnij'}
+        </span>
       </div>
     </div>
   );

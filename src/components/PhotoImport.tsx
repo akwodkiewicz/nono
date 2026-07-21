@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Image as ImageIcon, Plus, X } from '@phosphor-icons/react';
 import { readCluesFromPhoto, type OcrLine, type Orientation } from '../ocr/pipeline';
 import { useAppStore } from '../state/store';
-import { Button, IconButton, Panel } from './ui';
+import { ActionBar, Button, IconButton, Panel } from './ui';
 
 interface SlotState {
   running: boolean;
@@ -239,14 +239,17 @@ export default function PhotoImport() {
           onDeleteLine={deleteLine('cols')}
         />
       </div>
-      <div className="flex gap-2">
-        <Button variant="primary" size="lg" onClick={apply} disabled={!canApply}>
+      <ActionBar>
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={apply}
+          disabled={!canApply}
+          className="w-full sm:w-auto"
+        >
           Przenieś do edytora
         </Button>
-        <Button variant="secondary" size="lg" onClick={() => setView('editor')}>
-          Anuluj
-        </Button>
-      </div>
+      </ActionBar>
     </div>
   );
 }

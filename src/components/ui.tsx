@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { DotsThree } from '@phosphor-icons/react';
 
 /*
  * The app's three interactive primitives. Deliberately tiny: primary reads as
@@ -70,5 +72,86 @@ export function Panel({
 }) {
   return (
     <div className={`rounded-xl border border-line bg-surface ${className}`}>{children}</div>
+  );
+}
+
+/**
+ * Bottom action bar for a view's primary action. Sticks to the viewport bottom
+ * until the user scrolls down to its natural place, so the primary stays
+ * reachable even under long clue lists. The negative margins cancel `main`'s
+ * horizontal padding so the top hairline spans the column edge to edge.
+ */
+export function ActionBar({ children }: { children: ReactNode }) {
+  return (
+    <div className="sticky bottom-0 z-10 -mx-3 flex flex-wrap items-center justify-end gap-2 border-t border-line bg-paper px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:-mx-4 sm:px-4">
+      {children}
+    </div>
+  );
+}
+
+export interface MenuItemSpec {
+  label: string;
+  onSelect: () => void;
+  disabled?: boolean;
+}
+
+/**
+ * Small headless overflow menu for demoted, secondary actions. Closes on
+ * outside pointerdown (fires before click, so an item that opens a native file
+ * dialog still works) and on Escape.
+ */
+export function Menu({ label, items }: { label: string; items: MenuItemSpec[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <IconButton
+        className="h-8 w-8"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <DotsThree size={18} weight="bold" />
+      </IconButton>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-20 mt-1 min-w-44 rounded-xl border border-line bg-surface p-1"
+        >
+          {items.map((item) => (
+            <button
+              key={item.label}
+              role="menuitem"
+              disabled={item.disabled}
+              onClick={() => {
+                setOpen(false);
+                item.onSelect();
+              }}
+              className="w-full rounded-lg px-3 py-1.5 text-left text-sm text-ink transition-colors duration-150 hover:bg-ink/5 disabled:pointer-events-none disabled:opacity-40"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
