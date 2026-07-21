@@ -1,5 +1,6 @@
 import { ArrowLeft } from '@phosphor-icons/react';
 import ClueEditor from './components/ClueEditor';
+import LibraryView from './components/LibraryView';
 import PhotoImport from './components/PhotoImport';
 import SolverView from './components/SolverView';
 import { IconButton } from './components/ui';
@@ -8,7 +9,8 @@ import { useAppStore, type View } from './state/store';
 /** Header title and back target per view. The future 'assistant' view
  *  (docs/tryb-pomocnika.md) adds one entry here. */
 const VIEW_META: Record<View, { title: string; back?: View }> = {
-  editor: { title: 'Edytor' },
+  library: { title: 'Zagadki' },
+  editor: { title: 'Edytor', back: 'library' },
   import: { title: 'Import ze zdjęć', back: 'editor' },
   solver: { title: 'Rozwiązywanie', back: 'editor' },
 };
@@ -44,11 +46,7 @@ export default function App() {
       <header className="border-b border-line">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-2.5 px-4">
           {meta.back && (
-            <IconButton
-              className="-ml-2 h-8 w-8"
-              title="Wróć do edytora"
-              onClick={() => setView(meta.back!)}
-            >
+            <IconButton className="-ml-2 h-8 w-8" title="Wróć" onClick={() => setView(meta.back!)}>
               <ArrowLeft size={16} />
             </IconButton>
           )}
@@ -59,6 +57,7 @@ export default function App() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
+        {view === 'library' && <LibraryView />}
         {view === 'editor' && <ClueEditor />}
         {view === 'import' && <PhotoImport />}
         {view === 'solver' && <SolverView />}
