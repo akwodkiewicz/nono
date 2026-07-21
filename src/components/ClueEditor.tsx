@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Camera, FileArrowUp, Plus, X } from '@phosphor-icons/react';
+import { Camera, Export, FileArrowUp, Plus, Trash, X } from '@phosphor-icons/react';
 import { MAX_SIZE, parsePuzzle, useAppStore } from '../state/store';
 import { formatClue, parseClueText } from '../state/clueText';
 import { parsePuzzleJson, puzzleToJson } from '../state/puzzleJson';
@@ -153,14 +153,14 @@ export default function ClueEditor() {
           <Camera size={15} /> Wczytaj ze zdjęć
         </Button>
         <Button variant="secondary" size="sm" onClick={() => importInputRef.current?.click()}>
-          <FileArrowUp size={15} /> Import JSON
+          <FileArrowUp size={15} /> Wczytaj z pliku
         </Button>
         <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-line sm:block" />
         <Button variant="quiet" size="sm" onClick={exportJson} disabled={!puzzle}>
-          Eksport JSON
+          <Export size={15} /> Eksport
         </Button>
         <Button variant="quiet" size="sm" onClick={clearClues}>
-          Wyczyść
+          <Trash size={15} /> Reset
         </Button>
         <input
           ref={importInputRef}
